@@ -1,5 +1,6 @@
 # 🧿 AutorizePro (AI版上线啦 ❤️‍🔥): 点个🌟不迷路
-### AutorizePro 是一款专注于越权检测的 Burp 插件，基于Autorize插件进行二次开发，方便安装易于使用 (⚠️ ：未点击启用AI功能时走正常检测逻辑)
+### AutorizePro 是一款专注于越权检测的 Burp 插件，基于Autorize插件进行二次开发，方便安装易于使用 
+### ⚠️ ：未点击启用AI功能时走正常检测逻辑，AI为可选项。由于接口响应一般多种多样，启用AI分析会大幅提升检出准确率，强烈建议试试！！我相信免费的时间才是最贵的，我们应该尽量让AI来替我们做那些耗时且重复的工作。
 
 ### 工具背景
 - **越权漏洞在黑盒测试、SRC挖掘中几乎是必测的一项，但手工逐个测试越权漏洞往往会耗费大量时间，而自动化工具又存在大量误报, 基于此产生了AutorizePro**
@@ -95,7 +96,7 @@
 -  ⚠️ 注意：当启用AI分析功能时，您应该尽量在 Interception Filters 中配置拦截的 域名 / 规则 以免检测非目标站点带来的经费消耗。
 - AI分析功能需要先开通模型调用服务，在 [阿里云百炼首页顶部提示](https://bailian.console.aliyun.com/#/home) 进行开通：
 ![tongyi](imgs/tongyi.png)
-- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**，实际上线采用的模型成本减半，速度更快。 我相信免费的时间才是最贵的，我们应该尽量让AI来替我们做那些耗时且重复的工作。)。
+- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**，实际上线采用的模型成本减半，速度更快)
 <p>
     <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
 </p>
