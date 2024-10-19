@@ -5,7 +5,7 @@
 - **越权漏洞在黑盒测试、SRC挖掘中几乎是必测的一项，但手工逐个测试越权漏洞往往会耗费大量时间，而自动化工具又存在大量误报, 基于此产生了AutorizePro**
 
 ### 工具亮点
-- **优化检测逻辑 && 增加 AI 分析模块，将原始工具误报率从 99% 降低至 5% ，从海量误报中解脱出来**
+- **优化检测逻辑 && 增加 AI 分析模块(可选)，将原始工具误报率从 99% 降低至 5% ，从海量误报中解脱出来**
 - **对于需要人工确认的告警可通过展示页面并排查看 原始请求、越权请求 以及 未授权请求 的数据包方便对比差异**
 
 ### 适用人群
@@ -95,7 +95,7 @@
 -  ⚠️ 注意：当启用AI分析功能时，您应该尽量在 Interception Filters 中配置拦截的 域名 / 规则 以免检测非目标站点带来的经费消耗。
 - AI分析功能需要先开通模型调用服务，在 [阿里云百炼首页顶部提示](https://bailian.console.aliyun.com/#/home) 进行开通：
 ![tongyi](imgs/tongyi.png)
-- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**，实际上线采用的模型成本减半，速度更快。)。
+- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**，实际上线采用的模型成本减半，速度更快。 我相信免费的时间才是最贵的，我们应该尽量让AI来替我们做那些耗时且重复的工作。)。
 <p>
     <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
 </p>
