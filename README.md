@@ -90,12 +90,12 @@
 - **你可以通过黑名单、白名单、正则表达式或 Burp 的范围内的项目来确定拦截的范围，以避免不必要的域名被 AutorizePro 拦截，减少对不关注的请求的拦截分析。**
 - **🌟 默认配置会避免拦截脚本和图片，你也可以新增更多静态资源类型的忽略规则。**
 
-##  💰 AI分析功能需要花多少钱？
+##  💰 AI分析功能需要花多少钱？(默认根据工具检测逻辑判断，AI需要用户启用之后才会生效)
 - 为最大程度减少AI分析带来的经费消耗,目前仅检测响应为json格式 && 长度小于3000 的数据包;若不符合条件，AI分析功能将不会生效。  
 -  ⚠️ 注意：当启用AI分析功能时，您应该尽量在 Interception Filters 中配置拦截的 域名 / 规则 以免检测非目标站点带来的经费消耗。
 - AI分析功能需要先开通模型调用服务，在 [阿里云百炼首页顶部提示](https://bailian.console.aliyun.com/#/home) 进行开通：
 ![tongyi](imgs/tongyi.png)
-- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元** )。
+- [阿里云通义千问API计费说明](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**，实际上线采用的模型成本减半，速度更快。)。
 <p>
     <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
 </p>
