@@ -1,4 +1,4 @@
-# 🧿 AutorizePro (AI版上线啦 ❤️‍🔥):
+# 🧿 AutorizePro (AI版上线啦 ❤️‍🔥): 点个🌟不迷路
 ### AutorizePro 是一款专注于越权检测的 Burp 插件，基于Autorize插件进行二次开发，方便安装易于使用
 
 ### 工具背景
