@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/26959ef1-1629-4f6b-9dbc-68e1cd0099b7)
+
 - [English README IS HERE](https://github.com/sule01u/AutorizePro/blob/master/README_en.md)
 
 # 🧿 AutorizePro (AI分析模块上线啦 ❤️‍🔥):   创作不易，欢迎点个🌟支持开源项目
