@@ -29,6 +29,8 @@
     4. In the Extension File field, choose the path to the `AutorizePro.py` file from the repository.
 
 ### AutorizePro Plugin Successfully Installed 🎉
+> 💡 The display ratio between the display page and the configuration page can be adjusted by pulling the sidebar in the middle (the full-screen display is basically normal, but when the screen is small (non-full-screen or notebook), only the display page may be seen, and the configuration page can be displayed by pulling the sidebar to the left, for subsequent optimization).
+
 ![cover](imgs/cover.png)
 
 ## 🔫 Using the AutorizePro Plugin
