@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/e61f8069-f775-419d-b020-37d0f0ee1227)
+
 # 🧿 AutorizePro (AI Analysis Module Now Available ❤️‍🔥):  Click star to support this project
 ### AutorizePro is a Burp plugin specialized in detecting privilege escalation, developed based on the Autorize plugin. It is easy to install and use.
 > **⚠️ When the AI feature is not enabled, the plugin follows the normal detection logic. AI is optional. Since responses to APIs are typically varied, enabling AI analysis greatly improves detection accuracy. Highly recommended! Time is valuable, and we should let AI handle time-consuming and repetitive tasks whenever possible.**
