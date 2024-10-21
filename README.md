@@ -26,12 +26,14 @@
 	4. 选择你刚刚下载的 Jython standalone JAR 文件 (本项目使用2.7.3版本测试)
 
 ### 3️⃣ 安装 AutorizePro 插件
-	1. 下载插件到本地
+	1. 下载代码仓库zip包到本地，解压
     2. 打开 Burp Suite，导航到 Extender -> Extensions -> Add
     3. 在 Extension Type 选择框中，选择python
     4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径
 
 ### AutorizePro 插件安装完成界面 🎉
+> 💡 可通过 拉动 中间的侧边栏调整展示页和配置页的显示比例
+
 ![cover](imgs/cover.png)
     
 ## 🔫 使用 AutorizePro 插件
