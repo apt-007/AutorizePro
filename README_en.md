@@ -22,7 +22,7 @@
 	1. Open Burp Suite.
 	2. Navigate to Extender -> Options.
 	3. In the Python Environment section, click Select File.
-	4. Choose the Jython standalone JAR file you just downloaded (tested with version 2.7.3).
+	4. Choose the Jython standalone JAR file you just downloaded (This project tests the env is: jython 2.7.3, java1.8, burp suite 2024.9).
 
 ### 3️⃣ Install the AutorizePro Plugin
 	1. Download the plugin to your local machine.
@@ -81,9 +81,9 @@ If a particular endpoint responds with “Unauthorized” for privilege escalati
 
 ### 🚰 Filter Configuration: Set Interception Rules in Interception Filters
 
-- **You can configure which domains or which requests the plugin should intercept.**
-- **Filters can be based on blacklists, whitelists, regular expressions, or Burp’s scope settings, preventing unnecessary domains from being intercepted, reducing irrelevant request analysis.**
-- **🌟 The default configuration avoids intercepting scripts and images, but you can add more static resource types to the ignore list.**
+- You can configure which domains or which requests the plugin should intercept.
+- Filters can be based on blacklists, whitelists, regular expressions, or Burp’s scope settings, preventing unnecessary domains from being intercepted, reducing irrelevant request analysis.
+- 🌟 The default configuration avoids intercepting scripts and images, but you can add more static resource types to the ignore list.
 
 ## 💰 How Much Does the AI Analysis Feature Cost? (By default, detection logic is followed, and AI is only activated when enabled by the user)
 - To minimize the costs associated with AI analysis, only packets with equal status codes, JSON format responses, and lengths under 3000 are analyzed when AI analysis is enabled. If conditions are not met, AI analysis will not activate.  
