@@ -27,6 +27,7 @@ from helpers.http import (
     isStatusCodesReturned,
     makeMessage,
     makeRequest,
+    getRequestBody,
     getResponseBody,
     IHttpRequestResponseImplementation
 )
@@ -319,7 +320,7 @@ def is_json_response(self, content):
         return False
 
 
-def checkBypass(self, oldStatusCode, newStatusCode, oldContent, newContent, filters, requestResponse, andOrEnforcement, isAuthorized):
+def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, filters, requestResponse, andOrEnforcement, isAuthorized):
     AI_res = ""
     if oldStatusCode == newStatusCode:
         auth_enforced = 0
@@ -328,7 +329,7 @@ def checkBypass(self, oldStatusCode, newStatusCode, oldContent, newContent, filt
             if is_json_response(self, oldContent) and is_json_response(self, newContent) and 100 < len(oldContent) < 3000:
                 api_key = self.apiKeyField.getText()
                 if api_key:
-                    AI_res = call_dashscope_api(self, api_key, oldContent, newContent)
+                    AI_res = call_dashscope_api(self, api_key, oriUrl, oriBody, oldContent, newContent)
                     if AI_res == "true":
                         AI_res = self.BYPASSSED_STR
                     elif AI_res == "false":
@@ -382,7 +383,43 @@ def extract_res_value(self, response_string):
         return ""
 
 
-def call_dashscope_api(self, api_key, res1, res2):
+def generate_prompt(self, system_prompt, user_prompt):
+    return u"""
+    {
+        "model": "qwen-turbo",
+        "messages": [
+            {
+                "role": "system",
+                "content": "%s"
+            },
+            {
+                "role": "user", 
+                "content": "%s"
+            }
+        ]
+    }
+    """ % (system_prompt, user_prompt)
+
+
+def call_dashscope_api(self, api_key, oriUrl, oriBody, res1, res2):
+    oriBody = escape_special_characters(self, oriBody)
+    res1 = escape_special_characters(self, res1)
+    res2 = escape_special_characters(self, res2)
+
+    req_system_prompt = "角色描述: 你是一个判断接口类型的机器人。\n\n输入介绍: 用户提供了某接口的请求url和请求body,你需要结合请求url以及请求body判断接口是否为资源操作接口\n分析要求:\na. 请求url和请求body之中均不存在资源标识,则判定为公共接口(false); b.请求URL或请求body中存在用户ID、资源ID、会话ID、等各种资源标识、路径、链接等，则判定为资源接口(true)；c. 其他情况通过请求url和请求body猜测接口功能是否和资源操作相关自主判断是否为资源接口，尽可能减少资源接口的漏报，无法确定时，判定为未知(unknown)。\n\n输出格式：仅以 JSON 格式返回结果, 格式示例：{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过30字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收请求url和请求boby \n2. 进行分析：按照分析要求，对请求进行分析判断。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合接口知识进行分析。"
+    req_user_prompt = "Request url: %s, Request body: %s" % (oriUrl, oriBody)
+    request_body = generate_prompt(self, escape_special_characters(self, req_system_prompt), escape_special_characters(self, req_user_prompt))
+    res = request_dashscope_api(self, api_key, oriUrl, request_body)
+    if res == "true" or res == "unknown":
+        res_system_prompt =  "角色描述: 你是一个通过对比两个http请求响应数据包相似性判断是否越权的机器人，需要结合下面的要求以及你自己的知识给出最佳的判断结果。 \n\n输入介绍: 用户提供的响应A内容为账号A身份的去请求某接口的响应, 响应B为将请求中A账号的Cookie替换为账号B的Cookie之后重放该请求获取到的响应。\n分析要求: \n1. 对比响应内容：忽略动态字段（如时间戳、traceID、requestID 等可能每次请求都会变化的则为动态字段），然后比较响应 A 和响应 B 的结构和内容相似度。\n2. 判断依据参考如下: \n越权成功: a.(特例)如果响应A和响应B中都存在'success'字段且值都为true 且 响应体结构一致,表示接口操作成功,判定越权成功(true)。b.如果响应 B 与响应 A 的响应结构相似 且 非动态字段值都非常相似，判定为越权成功(true)。b.如果响应B中包含了账号A的个人业务数据、账号数据，判定为越权成功(true)。\n越权失败: a.如果响应B结构和内容均与响应A不相似，判定越权失败(false)。b.如果响应B中存在权限不足、需要登录等权限控制返回的错误信息，判定为越权失败(false)。c.如果两个响应的结构相同，但账号特征字段(账号用户名、邮箱、userid等)值不同,则判定越权失败(false)。\n其他情况:a.其他情况结合你对越权知识的了解自主判断是否越权，当无法确定是否越权时，判定为未知(unknown)。\n输出格式：\n仅以 JSON 格式返回结果，越权成功为:true,越权失败为:false,未知为:unknown,格式示例：\n{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过30字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收响应A和响应B并理解 \n2. 进行分析：按照分析要求，对响应A和B进行比较,忽略动态字段，重点关注结构和非动态字段的差异。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合越权知识进行分析。"
+        res_user_prompt = "Response A: %s, Response B: %s" % (res1, res2)
+        request_body = generate_prompt(self, escape_special_characters(self, res_system_prompt), escape_special_characters(self, res_user_prompt))
+        AI_res = request_dashscope_api(self, api_key, oriUrl, request_body)
+        return AI_res
+    return ""
+
+
+def request_dashscope_api(self, api_key, orgUrl, request_body):
     try:
         url = URL("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
         connection = url.openConnection()
@@ -393,29 +430,6 @@ def call_dashscope_api(self, api_key, res1, res2):
 
         connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
         connection.setRequestProperty("Authorization", "Bearer " + api_key)
-
-        res1_escaped = escape_special_characters(self, res1)
-        res2_escaped = escape_special_characters(self, res2)
-        system_message = escape_special_characters(self,
-            # "角色描述: 你是一个通过对比两个http请求响应数据包相似性判断是否越权的机器人，需要结合下面的要求以及你自己的知识给出最佳的判断结果。 \n\n输入介绍: 用户提供的响应A内容为账号A的去请求某接口的响应, 响应B为将请求中A账号的Cookie替换为账号B的Cookie之后重放该请求获取到的响应。\n分析要求: \n1. 对比响应内容：首先比较响应 A 和响应 B 的结构和内容，忽略动态字段（如时间戳、随机数、会话 ID 等可能每次请求都会变化的字段），响应 B 跟 响应 A 的结构以及内容相似度是否很高。\n2. 判断结果：a.如果响应 B 与响应 A 的结构和非动态字段内容都非常相似，判定为越权成功。b.如果响应B中包含了账号A的数据，判定为越权成功。c.如果响应B结构和内容均与响应A不相似，判定越权失败。d.如果响应B中存在权限不足等权限控制返回的错误信息，判定为越权失败。e.如果响应A和B的内容均为公开数据 或 两个响应大部分相同字段的具体值不同,存在不同账号特征 或 除动态字段外的字段均无实际值(比如值为null),则判定越权失败。f.其他情况结合你对越权知识的了解自主判断是否越权，当无法确定是否越权时，判定为未知。\n输出格式：\n仅以 JSON 格式返回结果，格式示例：\n{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过20字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收响应A和响应B并理解 \n2. 进行分析：按照分析要求，对响应A和B进行比较,忽略动态字段，重点关注结构和非动态字段的差异。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合越权知识进行分析。"
-            "角色描述: 你是一个通过对比两个http请求响应数据包相似性判断是否越权的机器人，需要结合下面的要求以及你自己的知识给出最佳的判断结果。 \n\n输入介绍: 用户提供的响应A内容为账号A身份的去请求某接口的响应, 响应B为将请求中A账号的Cookie替换为账号B的Cookie之后重放该请求获取到的响应。\n分析要求: \n1. 对比响应内容：忽略动态字段（如时间戳、随机数、会话 ID 等可能每次请求都会变化的字段），然后比较响应 A 和响应 B 的结构和内容相似度。\n2. 判断依据参考如下: \n越权失败: a.如果响应B结构和内容均与响应A不相似，判定越权失败。b.如果响应B中存在权限不足、需要登录等权限控制返回的错误信息，判定为越权失败。c.如果响应A和B的内容均为公开接口返回的数据(如接口说明) 或 除动态字段（如时间戳、随机数、会话 ID 等可能每次请求都会变化的字段）之外的字段值大部分均为 null， 则判定越权失败。d.如果两个响应的结构相同，但账号特征字段(账号用户名、邮箱、id)值不同,则判定越权失败。\n越权成功: \na.如果响应 B 与响应 A 的响应结构相似 且 非动态字段内容不为空 且 非动态字段值都非常相似，判定为越权成功。b.如果响应B中包含了账号A的个人业务数据、账号数据，判定为越权成功。c.如果响应A和响应B中存在success字段且值都为true,则判定越权成功。\n其他情况:a.其他情况结合你对越权知识的了解自主判断是否越权，当无法确定是否越权时，判定为未知。\n输出格式：\n仅以 JSON 格式返回结果，格式示例：\n{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过30字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收响应A和响应B并理解 \n2. 进行分析：按照分析要求，对响应A和B进行比较,忽略动态字段，重点关注结构和非动态字段的差异。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合越权知识进行分析。"
-        )
-
-        request_body = u"""
-        {
-            "model": "qwen-turbo",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "%s"
-                },
-                {
-                    "role": "user", 
-                    "content": "账号A请求接口返回的响应A: %s, 替换为账号B的cookie后重放请求获取的响应B: %s"
-                }
-            ]
-        }
-        """ % (system_message, res1_escaped, res2_escaped)
 
         # print("Request Body Before Encoding:\n" + request_body)
 
@@ -432,7 +446,7 @@ def call_dashscope_api(self, api_key, res1, res2):
         if responseCode == HttpURLConnection.HTTP_OK or responseCode == HttpURLConnection.HTTP_CREATED:
             inputStream = connection.getInputStream()
             AI_res = read_response(self, inputStream)
-            # print("AI API Response.Body :: " + AI_res)
+            # print("URL:: %s ===> AI API Response.Body :: %s" % (orgUrl, AI_res))
 
             res_value = extract_res_value(self, AI_res)
             # print("---> The result of AI judgment :: " + res_value)
@@ -454,6 +468,9 @@ def call_dashscope_api(self, api_key, res1, res2):
 
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
+    # 获取原始请求的 URL 和请求体
+    oriUrl, oriBody = getRequestBody(self, messageInfo)
+
     if checkUnauthorized:
         messageUnauthorized = makeMessage(self, messageInfo, True, False)
         requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
@@ -474,11 +491,11 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
 
     EDFilters = self.EDModel.toArray()
 
-    impression, AI_res = checkBypass(self, oldStatusCode, newStatusCode, oldContent, newContent, EDFilters, requestResponse,
+    impression, AI_res = checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, EDFilters, requestResponse,
                              self.AndOrType.getSelectedItem(), True)
     if checkUnauthorized:
         EDFiltersUnauth = self.EDModelUnauth.toArray()
-        impressionUnauthorized, _ = checkBypass(self, oldStatusCode, statusCodeUnauthorized, oldContent,
+        impressionUnauthorized, _ = checkBypass(self, oriUrl, oriBody, oldStatusCode, statusCodeUnauthorized, oldContent,
                                              contentUnauthorized, EDFiltersUnauth, requestResponseUnauthorized,
                                              self.AndOrTypeUnauth.getSelectedItem(), False)
 
