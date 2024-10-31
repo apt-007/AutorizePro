@@ -89,6 +89,20 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
     return self._helpers.buildHttpMessage(headers, msgBody)
 
 
+def getRequestBody(self, messageInfo):
+    httpService = messageInfo.getHttpService()
+
+    request = messageInfo.getRequest()
+    requestInfo = self._helpers.analyzeRequest(httpService, request)
+
+    full_url = requestInfo.getUrl()
+
+    body_offset = requestInfo.getBodyOffset()
+    request_body = self._helpers.bytesToString(request[body_offset:])
+
+    return full_url, request_body
+
+
 def getResponseHeaders(self, requestResponse):
     analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
     return self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])
