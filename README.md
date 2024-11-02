@@ -34,9 +34,9 @@
     4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径
 
 ### AutorizePro 插件安装完成界面 🎉
-> 💡 可通过 拉动 中间的侧边栏调整展示页和配置页的显示比例 （显示器全屏基本正常显示，屏幕小(非全屏或笔记本)的时候可能只看见展示页，可通过往左拉动侧边栏显示配置页，后续优化）
+> 💡 可通过 拉动 中间的侧边栏调整展示页和配置页的显示比例
 
-![cover](imgs/cover.png)
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/f17eade9-487b-44ff-bf67-6a42355b7a8d">
     
 ## 🔫 使用 AutorizePro 插件
     1. 打开配置选项卡：点击 AutorizePro -> Configuration。
