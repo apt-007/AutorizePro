@@ -114,10 +114,13 @@ def getResponseHeaders(self, requestResponse):
 #     return self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])
 
 def getResponseBody(self, requestResponse):
+    """
+    提取 HTTP 响应体，并确保正确解码文本内容，同时支持处理非 UTF-8 字节数据和二进制内容。
+    """
     analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
-
     headers = analyzedResponse.getHeaders()
     charset = "UTF-8"
+
     for header in headers:
         if header.lower().startswith("content-type:"):
             if "charset=" in header.lower():
@@ -128,15 +131,22 @@ def getResponseBody(self, requestResponse):
     if isinstance(body_bytes, array.array):
         body_bytes = body_bytes.tostring()
 
-    if any(header.lower().startswith("content-type:") and ("image" in header.lower() or "application/octet-stream" in header.lower()) for header in headers):
+    if any(header.lower().startswith("content-type:") and
+           ("image" in header.lower() or "application/octet-stream" in header.lower())
+           for header in headers):
         return body_bytes
 
     try:
         return body_bytes.decode(charset)
     except (UnicodeDecodeError, LookupError) as e:
         self._callbacks.printError("Error decoding response body with charset %s: %s" % (charset, str(e)))
-        # print("Response: ", body_bytes)
-        return body_bytes.decode("UTF-8", errors="replace")
+        try:
+            return body_bytes.decode("utf-8-sig")
+        except (UnicodeDecodeError, LookupError):
+            try:
+                return body_bytes.decode("ISO-8859-1")
+            except (UnicodeDecodeError, LookupError):
+                return body_bytes.decode("UTF-8", errors="replace")
     except Exception as e:
         self._callbacks.printError("Unexpected error decoding response body: %s" % str(e))
         return body_bytes.decode("UTF-8", errors="replace")

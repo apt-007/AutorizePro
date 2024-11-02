@@ -85,7 +85,4 @@ class Initiator():
         self._extender._callbacks.customizeUiComponent(self._extender.filtersTabs)
 
     def print_welcome_message(self):
-        print("""Thank you for installing AutorizePro extension
-Created by sule01u
-AutorizePro is based on Autorize, thanks Contributors: {} 
-""".format(self._extender.version, ", ".join(self.contributors)))
+        print("""Thank you for installing AutorizePro extension.\n\nAuthor: Sule01u\nVersion: {}\nGithub: https://github.com/sule01u/AutorizePro""".format(self._extender.version))
