@@ -405,12 +405,76 @@ def call_dashscope_api(self, api_key, oriUrl, oriBody, res1, res2):
     oriBody = escape_special_characters(self, oriBody)
     res1 = escape_special_characters(self, res1)
     res2 = escape_special_characters(self, res2)
-    req_system_prompt = "角色描述: 你是一个判断接口类型的机器人。\n\n输入介绍: 用户提供了某接口的请求url和请求body,你需要结合请求url以及请求body判断接口是否为资源操作接口\n\n分析要求:\n分析请求，结合下列接口特征判断依据进行判断:\n公共资源特征:a. 请求url和请求body之中均不存在用户或资源标识,则判定为公共接口(false)。\n 资源接口特征: a.请求URL或请求body中存在用户ID、资源ID、会话ID、等各种资源标识、路径、链接等，则判定为资源接口(true)；b.请求URL或请求body中存在疑似增删改查类操作，则判定为资源接口(true)；c.请求url中包含与用户或资源相关的关键词（如 user、profile、account、project 等）,判定为资源接口(true); d. 若 URL 中包含看似自定义的资源名称（如 projectName、userAlias 、url存在下划线等非标准接口命名），结合上下文判定为资源接口(true)。\n 其他情况：a.若 URL 中没有明确的用户或资源标识，但请求体包含敏感操作或与特定权限相关的字段（如 admin=true、role、accessLevel），则判定为资源接口(true)。b.其他情况统一判定为未知接口(unknown)。\n\n输出格式：仅以 JSON 格式返回结果, 格式示例：{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过30字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收请求url和请求boby \n2. 进行分析：按照分析要求，对请求进行分析判断。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合接口知识进行分析。"
+    req_system_prompt = """**角色描述**: 你是一个判断接口类型的机器人，需要根据请求的 URL 和请求体判断接口是否为资源接口。\n\n
+**输入介绍**: 用户提供了某接口的请求 URL 和请求体 (body)，你需要结合 URL 和请求体判断该接口是否为资源接口。\n\n
+**分析要求**:\n
+根据以下特征进行判断:\n\n
+**资源接口的特征**:\n
+1. 若URL 或请求体中包含用户ID、资源ID、会话ID、token、uuid 等资源标识符、路径或链接，判定为资源接口（true）。\n
+2. 若URL 或请求体中包含增、删、改、查类操作（如 create、update、delete、add、remove 等），判定为资源接口（true）。\n
+3. 若URL 中包含与用户或资源相关的关键词（如 users、profile、account、project、data 等），判定为资源接口（true）。\n
+4. 若URL 中包含下列**看似用户自定义的资源名称**特征之一的,判定为资源接口。\n
+   - 存在项目名称（如 `projectName`、`testProject`）、用户别名、人名（如 `userAlias`、`zhangwei`）\n
+   - 包含下划线、横线（如my_test、tmp-ceshi、）\n
+   - 字段名称不符合标准 API 命名规范且无明显的接口含义(如mytest、abcd、测试1、123、kkk等)\n
+   - url之中存在其他看起来不符合开发接口命名规范的名称\n
+**公共接口的特征**:\n
+注意：只有在不满足资源特征的前提之下，符合以下特征的才为公共接口（false）。\n
+1. 若URL 和请求体中均无用户或资源标识，判定为公共接口（false）。\n
+2. 若URL 中包含公共接口标识（如 help、ping、health、version 等）且无明确的用户或资源标识，判定为公共接口（false）。\n
+3. 若URL 中包含类似 `/public`、`/general` 的前缀，通常作为公共接口（false）。\n\n
+**其他情况**:\n
+1. 若 URL 无明确的用户或资源标识，但请求体包含敏感操作或特定权限相关字段（如 admin=true、role、accessLevel、permission、auth、scope），判定为资源接口（true）。\n
+2. 无法确定的情况，统一判定为未知接口（unknown）。\n\n
+**输出格式**:\n
+请仅返回 JSON 格式的结果，示例: `{"res":"true", "reason":"不超过50字的判断原因"}`\n
+res 字段值只能是 'true'、'false' 或 'unknown'。\n
+reason 字段说明判断原因，不超过50字。\n\n
+**注意事项**:\n
+0. 尽可能减少漏报，符合资源接口特征一律判定为资源接口(true)。\n
+1. 仅输出 JSON 结果，不添加任何额外文本或解释。\n
+2. 确保 JSON 格式正确，便于后续处理。\n
+3. 保持客观中立，仅根据请求内容进行分析。\n\n
+**总体流程**:\n
+1. 接收请求的 URL 和请求体。\n
+2. 按照分析要求判断接口类型。\n
+3. 逐步的进行分析，得出结论输出指定 JSON 格式的结果。\n"""
     req_user_prompt = "Request url: %s, Request body: %s" % (oriUrl, oriBody)
     request_body = generate_prompt(self, escape_special_characters(self, req_system_prompt), escape_special_characters(self, req_user_prompt))
     res = request_dashscope_api(self, api_key, oriUrl, request_body)
     if res == "true" or res == "unknown":
-        res_system_prompt =  "角色描述: 你是一个通过对比两个http请求响应数据包相似性判断是否越权的机器人，需要结合下面的要求以及你自己的知识给出最佳的判断结果。 \n\n输入介绍: 用户提供的响应A内容为账号A身份的去请求某接口的响应, 响应B为将请求中A账号的Cookie替换为账号B的Cookie之后重放该请求获取到的响应。\n分析要求: \n1. 对比响应内容：忽略动态字段（如时间戳、traceID、requestID 等可能每次请求都会变化的则为动态字段），然后比较响应 A 和响应 B 的结构和内容相似度。\n2. 判断依据参考如下: \n越权成功: a.(特例)如果响应A和响应B中都存在'success'字段且值都为true 且 响应体结构一致,表示接口操作成功,判定越权成功(true)。b.如果响应 B 与响应 A 的响应结构相似 且 非动态字段值都非常相似，判定为越权成功(true)。b.如果响应B中包含了账号A的个人业务数据、账号数据，判定为越权成功(true)。\n越权失败: a.如果响应B结构和内容均与响应A不相似，判定越权失败(false)。b.如果响应B中存在权限不足、需要登录等权限控制返回的错误信息，判定为越权失败(false)。c.如果两个响应的结构相同，但账号特征字段(账号用户名、邮箱、userid等)值不同,则判定越权失败(false)。\n其他情况:a.其他情况结合你对越权知识的了解自主判断是否越权，当无法确定是否越权时，判定为未知(unknown)。\n输出格式：\n仅以 JSON 格式返回结果，越权成功为:true,越权失败为:false,未知为:unknown,格式示例：\n{\"res\":\"true\", \"reaso\": \"不超过20字的判断原因\"}'\n res 字段值为字符串格式，只能是 'true'、'false' 或 'unknown' 中的一个值。\n  reason 字段给出判断的原因，不能超过30字。\n\n注意事项：\n1.输出仅包含 JSON 结果，不要添加任何额外的文本或解释。\n2.确保 JSON 格式正确，无语法错误，便于后续处理。\n3.保持客观中立,仅根据提供的响应内容进行分析。\n\n总体流程：\n1.接收响应A和响应B并理解 \n2. 进行分析：按照分析要求，对响应A和B进行比较,忽略动态字段，重点关注结构和非动态字段的差异。\n3. 输出结果：根据分析得出的结论，按照指定的 JSON 格式输出结果。\n谨记必须按照我给出的分析要求结合越权知识进行分析。"
+        res_system_prompt = """**角色描述**：你是一个判断是否存在越权的分析机器人，通过对比两个 HTTP 请求响应数据包的相似性，判断是否存在越权漏洞，并根据要求给出判断结果。\n\n
+**输入介绍**：用户提供了两个响应内容：\n
+- **响应 A**：账号 A 的身份请求接口返回的响应。\n
+- **响应 B**：将账号 A 的 Cookie 替换为账号 B 的 Cookie 后重新请求获得的响应。\n\n
+**分析要求**：\n
+1. **对比响应内容**：\n
+   - 忽略动态字段（如时间戳、traceID、requestID 等每次请求可能变化的字段）。动态字段通常包括时间戳、会话 ID、trace ID、请求 ID 等字段，字段名可能包含“id”、“timestamp”、“session”等字样。\n
+   - 对比响应 A 和 B 的非动态字段结构和内容，判断相似性。\n\n
+2. **判断依据**：\n
+   - **越权成功（true）**：\n
+     - 若响应 B 的结构和内容与响应 A 完全一致(所有非动态字段)，判定为越权成功。\n
+     - 若响应 B 中包含响应 A 中的资源数据或账号数据，且非动态字段与 A 的内容高度一致，也判定为越权成功。\n
+     - 若响应 A 和 B 中都存在 `success` 字段且值为 `true`，结构一致且响应内容较短无公开信息，也判定越权成功。\n\n
+   - **越权失败（false）**：\n
+     - 若响应 B 与响应 A 的结构和内容明显不同，尤其是结构不一致，判定为越权失败。\n
+     - 若响应 B 包含“权限不足”或“需要登录”等错误信息，判定为越权失败。\n
+     - 若响应 A 和 B 的结构一致，但账号特征字段（如用户名、邮箱、userid 等）中的值显示为账号 B 的信息而非账号 A 的信息，判定为越权失败。\n\n
+   - **其他情况（unknown）**：\n
+     - 若响应 B 包含与账号 A 无关的业务数据或敏感数据，但无法明确判断是否越权，则返回未知（unknown）。\n
+     - 若响应 A 和 B 的差异难以判断为越权成功或失败，则返回未知（unknown）。\n\n
+3. **输出格式**：\n
+   - 返回 JSON 格式的结果：`res` 字段值为字符串格式，只能是 `'true'`、`'false'` 或 `'unknown'`。\n
+   - 示例：`{"res":"true", "reason":"不超过50字的判断原因"}`。\n
+   - `reason` 字段说明判断原因，不能超过 50 字。\n\n
+**注意事项**：\n
+1. 仅输出 JSON 格式的结果，不添加任何额外文本或解释。\n
+2. 确保 JSON 格式正确，以便于后续处理。\n
+3. 保持客观中立，仅根据提供的响应内容进行分析。\n\n
+**总体流程**：\n
+1. 接收并理解响应 A 和 B。\n
+2. 忽略动态字段，重点对比非动态字段的结构和内容差异。\n
+3. 逐步的进行分析，得出结论输出指定 JSON 格式的结果。\n"""
         res_user_prompt = "Response A: %s, Response B: %s" % (res1, res2)
         request_body = generate_prompt(self, escape_special_characters(self, res_system_prompt), escape_special_characters(self, res_user_prompt))
         AI_res = request_dashscope_api(self, api_key, oriUrl, request_body)
@@ -440,12 +504,12 @@ def request_dashscope_api(self, api_key, orgUrl, request_body):
         outputStream.close()
 
         responseCode = connection.getResponseCode()
-        # print("AI API Response.Code :: " + str(responseCode))
+        # print("AI Res.Code :: " + str(responseCode))
 
         if responseCode == HttpURLConnection.HTTP_OK or responseCode == HttpURLConnection.HTTP_CREATED:
             inputStream = connection.getInputStream()
             AI_res = read_response(self, inputStream)
-            # print("URL:: %s ===> AI API Response.Body :: %s" % (orgUrl, AI_res))
+            # print("====> URL:: %s ===> AI_RES :: %s" % (orgUrl, AI_res))
 
             res_value = extract_res_value(self, AI_res)
             # print("---> The result of AI judgment :: " + res_value)
