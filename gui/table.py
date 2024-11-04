@@ -42,6 +42,10 @@ class TableFilter():
         filterLUnauthenticated = JLabel("Unauthenticated:")
         filterLUnauthenticated.setBounds(250, 10, 100, 30)
 
+        filterLAIAnalyzed = JLabel("AI.Analyzed:")
+        filterLAIAnalyzed.setBounds(490, 10, 100, 30)
+
+        # Existing Modified filters
         self._extender.showAuthBypassModified = JCheckBox(self._extender.BYPASSSED_STR)
         self._extender.showAuthBypassModified.setBounds(10, 35, 200, 30)
         self._extender.showAuthBypassModified.setSelected(True)
@@ -75,7 +79,22 @@ class TableFilter():
         self._extender.showDisabledUnauthenticated = JCheckBox("Disabled")
         self._extender.showDisabledUnauthenticated.setBounds(250, 110, 200, 30)
         self._extender.showDisabledUnauthenticated.setSelected(True)
-        self._extender.showDisabledUnauthenticated.addItemListener(TabTableFilter(self._extender))        
+        self._extender.showDisabledUnauthenticated.addItemListener(TabTableFilter(self._extender))
+
+        self._extender.showAuthBypassAIAnalyzed = JCheckBox(self._extender.BYPASSSED_STR)
+        self._extender.showAuthBypassAIAnalyzed.setBounds(490, 35, 200, 30)
+        self._extender.showAuthBypassAIAnalyzed.setSelected(True)
+        self._extender.showAuthBypassAIAnalyzed.addItemListener(TabTableFilter(self._extender))
+
+        self._extender.showAuthPotentiallyEnforcedAIAnalyzed = JCheckBox("Is enforced???")
+        self._extender.showAuthPotentiallyEnforcedAIAnalyzed.setBounds(490, 60, 200, 30)
+        self._extender.showAuthPotentiallyEnforcedAIAnalyzed.setSelected(True)
+        self._extender.showAuthPotentiallyEnforcedAIAnalyzed.addItemListener(TabTableFilter(self._extender))
+
+        self._extender.showAuthEnforcedAIAnalyzed = JCheckBox(self._extender.ENFORCED_STR)
+        self._extender.showAuthEnforcedAIAnalyzed.setBounds(490, 85, 200, 30)
+        self._extender.showAuthEnforcedAIAnalyzed.setSelected(True)
+        self._extender.showAuthEnforcedAIAnalyzed.addItemListener(TabTableFilter(self._extender))
 
         self._extender.filterPnl = JPanel()
         layout = GroupLayout(self._extender.filterPnl)
@@ -84,130 +103,181 @@ class TableFilter():
         layout.setAutoCreateContainerGaps(True)
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup()
-                .addComponent(
-                    filterLModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthBypassModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthPotentiallyEnforcedModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthEnforcedModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup()
-                .addComponent(
-                    filterLUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthBypassUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthPotentiallyEnforcedUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthEnforcedUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showDisabledUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
+        .addGroup(layout.createParallelGroup()
+        .addComponent(
+            filterLModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
         )
-        
-        
+        .addComponent(
+            self._extender.showAuthBypassModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        .addGroup(layout.createParallelGroup()
+        .addComponent(
+            filterLUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthBypassUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showDisabledUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        .addGroup(layout.createParallelGroup()
+        .addComponent(
+            filterLAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthBypassAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        )
+
         layout.setVerticalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    filterLModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    filterLUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(
-                        self._extender.showAuthBypassModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthPotentiallyEnforcedModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthEnforcedModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                )
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(
-                        self._extender.showAuthBypassUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthPotentiallyEnforcedUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthEnforcedUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showDisabledUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                )
-            )
+        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        .addComponent(
+            filterLModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            filterLUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            filterLAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        .addGroup(layout.createSequentialGroup()
+        .addComponent(
+            self._extender.showAuthBypassModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedModified,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        .addGroup(layout.createSequentialGroup()
+        .addComponent(
+            self._extender.showAuthBypassUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showDisabledUnauthenticated,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        .addGroup(layout.createSequentialGroup()
+        .addComponent(
+            self._extender.showAuthBypassAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthPotentiallyEnforcedAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        .addComponent(
+            self._extender.showAuthEnforcedAIAnalyzed,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+            GroupLayout.PREFERRED_SIZE,
+        )
+        )
+        )
         )
 
 
@@ -239,7 +309,7 @@ class TableModel(AbstractTableModel):
         return 9
 
     def getColumnName(self, columnIndex):
-        data = ['ID','Method', 'URL', 'Orig. Len', 'Modif. Len', "Unauth. Len",
+        data = ['ID', 'Method', 'URL', 'Orig. Len', 'Modif. Len', "Unauth. Len",
                 "Authz. Status", "Unauth. Status", "AI. Analyzer"]
         try:
             return data[columnIndex]
@@ -247,7 +317,7 @@ class TableModel(AbstractTableModel):
             return ""
 
     def getColumnClass(self, columnIndex):
-        data = [Integer, String, String, Integer, Integer, Integer, String, String, String]    # 分析结果为string类型
+        data = [Integer, String, String, Integer, Integer, Integer, String, String, String]  # 分析结果为string类型
         try:
             return data[columnIndex]
         except IndexError:
@@ -263,18 +333,22 @@ class TableModel(AbstractTableModel):
             return logEntry._url.toString()
         if columnIndex == 3:
             response = logEntry._originalrequestResponse.getResponse()
-            return len(logEntry._originalrequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
+            return len(logEntry._originalrequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(
+                response).getBodyOffset()
         if columnIndex == 4:
             response = logEntry._requestResponse.getResponse()
-            return len(logEntry._requestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
+            return len(logEntry._requestResponse.getResponse()) - self._extender._helpers.analyzeResponse(
+                response).getBodyOffset()
         if columnIndex == 5:
             if logEntry._unauthorizedRequestResponse is not None:
                 response = logEntry._unauthorizedRequestResponse.getResponse()
-                return len(logEntry._unauthorizedRequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
+                return len(
+                    logEntry._unauthorizedRequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(
+                    response).getBodyOffset()
             else:
                 return 0
         if columnIndex == 6:
-            return logEntry._enfocementStatus   
+            return logEntry._enfocementStatus
         if columnIndex == 7:
             return logEntry._enfocementStatusUnauthorized
         if columnIndex == 8:
@@ -284,6 +358,7 @@ class TableModel(AbstractTableModel):
 
 class TableSelectionListener(ListSelectionListener):
     """Class Responsible for the multi-row deletion"""
+
     def __init__(self, extender):
         self._extender = extender
 
@@ -308,9 +383,6 @@ class Table(JTable):
         value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
         if col == 6 or col == 7 or col == 8:
             if value == self._extender.BYPASSSED_STR:
-                if col == 8:
-                    comp.setBackground(Color(255, 0, 0))
-                    comp.setForeground(Color.BLACK)
                 comp.setBackground(Color(255, 153, 153))
                 comp.setForeground(Color.BLACK)
             elif value == self._extender.IS_ENFORCED_STR:
@@ -329,7 +401,7 @@ class Table(JTable):
             comp.setForeground(Color.BLACK)
 
         return comp
-    
+
     def changeSelection(self, row, col, toggle, extend):
         # show the log entry for the selected row
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
@@ -339,8 +411,10 @@ class Table(JTable):
         self._extender._originalresponseViewer.setMessage(logEntry._originalrequestResponse.getResponse(), False)
 
         if logEntry._unauthorizedRequestResponse is not None:
-            self._extender._unauthorizedrequestViewer.setMessage(logEntry._unauthorizedRequestResponse.getRequest(), True)
-            self._extender._unauthorizedresponseViewer.setMessage(logEntry._unauthorizedRequestResponse.getResponse(), False)
+            self._extender._unauthorizedrequestViewer.setMessage(logEntry._unauthorizedRequestResponse.getRequest(),
+                                                                 True)
+            self._extender._unauthorizedresponseViewer.setMessage(logEntry._unauthorizedRequestResponse.getResponse(),
+                                                                  False)
         else:
             self._extender._unauthorizedrequestViewer.setMessage("Request disabled", True)
             self._extender._unauthorizedresponseViewer.setMessage("Response disabled", False)
@@ -359,6 +433,10 @@ class Table(JTable):
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.modified_requests_tabs)
             expand(self._extender, self._extender.unauthenticated_requests_tabs)
+        elif col == 5 or col == 8:
+            collapse(self._extender, self._extender.original_requests_tabs)
+            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
+            expand(self._extender, self._extender.modified_requests_tabs)
         else:
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.modified_requests_tabs)
@@ -369,7 +447,8 @@ class Table(JTable):
 
 
 class LogEntry:
-    def __init__(self, id, requestResponse, method, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized, aiAnalysisResult=""):
+    def __init__(self, id, requestResponse, method, url, originalrequestResponse, enforcementStatus,
+                 unauthorizedRequestResponse, enforcementStatusUnauthorized, aiAnalysisResult=""):
         self._id = id
         self._requestResponse = requestResponse
         self._originalrequestResponse = originalrequestResponse
@@ -398,28 +477,40 @@ class TableRowFilter(RowFilter):
     def include(self, entry):
         if self._extender.showAuthBypassModified.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(6):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(6):
+        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
+                6):
             return True
         elif self._extender.showAuthEnforcedModified.isSelected() and self._extender.ENFORCED_STR == entry.getValue(6):
             return True
-        elif self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(7):
+        elif self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(
+                7):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(7):
+        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
+                7):
             return True
-        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == entry.getValue(7):
+        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == entry.getValue(
+                7):
             return True
         elif self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == entry.getValue(7):
+            return True
+        elif self._extender.showAuthBypassAIAnalyzed.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(8):
+            return True
+        elif self._extender.showAuthPotentiallyEnforcedAIAnalyzed.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
+                8):
+            return True
+        elif self._extender.showAuthEnforcedAIAnalyzed.isSelected() and self._extender.ENFORCED_STR == entry.getValue(
+                8):
             return True
         else:
             return False
 
 
 class UpdateTableEDT(Runnable):
-    def __init__(self,extender,action,firstRow,lastRow):
-        self._extender=extender
-        self._action=action
-        self._firstRow=firstRow
-        self._lastRow=lastRow
+    def __init__(self, extender, action, firstRow, lastRow):
+        self._extender = extender
+        self._action = action
+        self._firstRow = firstRow
+        self._lastRow = lastRow
 
     def run(self):
         if self._action == "insert":
