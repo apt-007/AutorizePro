@@ -322,36 +322,34 @@ def is_json_response(self, content):
 
 def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, filters, requestResponse, andOrEnforcement, isAuthorized):
     AI_res = ""
-    if oldStatusCode == newStatusCode:
-        auth_enforced = 0
-
-        if isAuthorized and self.apiKeyEnabledCheckbox.isSelected():
-            if is_json_response(self, oldContent) and is_json_response(self, newContent) and 100 < len(oldContent) < 3000:
-                api_key = self.apiKeyField.getText()
-                if api_key:
-                    AI_res = call_dashscope_api(self, api_key, oriUrl, oriBody, oldContent, newContent)
-                    if AI_res == "true":
-                        AI_res = self.BYPASSSED_STR
-                    elif AI_res == "false":
-                        AI_res = self.ENFORCED_STR
-                    elif AI_res == "unknown":
-                        AI_res = self.IS_ENFORCED_STR
-                else:
-                    self._callbacks.printError("API-Key is None")
-
-        if len(filters) > 0:
-            auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
-
-        if auth_enforced:
-            return self.ENFORCED_STR, AI_res
-
-        elif oldContent == newContent:
-            return self.BYPASSSED_STR, AI_res
-
-        else:
-            return self.IS_ENFORCED_STR, AI_res
-    else:
+    if oldStatusCode != newStatusCode or not newContent or not is_json_response(self, oldContent) or not is_json_response(self, newContent):
         return self.ENFORCED_STR, AI_res
+
+    auth_enforced = 0
+    if isAuthorized and self.apiKeyEnabledCheckbox.isSelected():
+        old_content_len = len(oldContent)
+        if 100 < old_content_len < 3000:
+            api_key = self.apiKeyField.getText()
+            if api_key:
+                api_result_mapping = {
+                    "true": self.BYPASSSED_STR,
+                    "false": self.ENFORCED_STR,
+                    "unknown": self.IS_ENFORCED_STR
+                }
+                AI_res = call_dashscope_api(self, api_key, oriUrl, oriBody, oldContent, newContent)
+                AI_res = api_result_mapping.get(AI_res, AI_res)
+            else:
+                self._callbacks.printError("API-Key is None")
+
+    if filters:
+        auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
+
+    if auth_enforced:
+        return self.ENFORCED_STR, AI_res
+    elif len(oldContent) == len(newContent):
+        return self.BYPASSSED_STR, AI_res
+    else:
+        return self.IS_ENFORCED_STR, AI_res
 
 
 def escape_special_characters(self, input_string):
@@ -410,13 +408,13 @@ def call_dashscope_api(self, api_key, oriUrl, oriBody, res1, res2):
 **分析要求**:\n
 根据以下特征进行判断:\n\n
 **资源接口的特征**:\n
-1. 若URL 或请求体中包含用户ID、资源ID、会话ID、token、uuid 等资源标识符、路径或链接，判定为资源接口（true）。\n
-2. 若URL 或请求体中包含增、删、改、查类操作（如 create、update、delete、add、remove 等），判定为资源接口（true）。\n
-3. 若URL 中包含与用户或资源相关的关键词（如 users、profile、account、project、data 等），判定为资源接口（true）。\n
-4. 若URL 中包含下列**看似用户自定义的资源名称**特征之一的,判定为资源接口。\n
+1. 若请求URL 或请求体中包含用户ID、资源ID、会话ID、token、uuid 等资源标识符、路径或链接，判定为资源接口（true）。\n
+2. 若请求URL 或请求体中包含增、删、改、查类操作（如 create、update、delete、add、remove 等），判定为资源接口（true）。\n
+3. 若请求URL 中包含与用户 或 资源相关的关键词（如 users、profile、account、project、data、config 等），统一判定为资源接口（true）。\n
+4. 若请求URL 中包含下列**看似用户自定义的资源名称**特征之一的,判定为资源接口。\n
    - 存在项目名称（如 `projectName`、`testProject`）、用户别名、人名（如 `userAlias`、`zhangwei`）\n
    - 包含下划线、横线（如my_test、tmp-ceshi、）\n
-   - 字段名称不符合标准 API 命名规范且无明显的接口含义(如mytest、abcd、测试1、123、kkk等)\n
+   - 字段名称不符合标准 API 命名规范且无明显的接口含义(如mytest、abcd、测试1、一串数字、kkk等)\n
    - url之中存在其他看起来不符合开发接口命名规范的名称\n
 **公共接口的特征**:\n
 注意：只有在不满足资源特征的前提之下，符合以下特征的才为公共接口（false）。\n
@@ -531,7 +529,6 @@ def request_dashscope_api(self, api_key, orgUrl, request_body):
 
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
-    # 获取原始请求的 URL 和请求体
     oriUrl, oriBody = getRequestBody(self, messageInfo)
 
     if checkUnauthorized:
