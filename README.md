@@ -2,7 +2,7 @@
 
 - [English README IS HERE](https://github.com/sule01u/AutorizePro/blob/master/README_en.md)
 
-# 🧿 AutorizePro (AI分析模块上线啦 ❤️‍🔥):   创作不易，欢迎点个🌟支持开源项目
+# 🧿 AutorizePro (AI分析模块上线啦 ❤️‍🔥):  欢迎各种反馈共同提升工具检测效果
 ### AutorizePro 是一款专注于越权检测的 Burp 插件，基于Autorize插件进行二次开发，方便安装易于使用 
 > **⚠️ 未点击启用AI功能时走正常检测逻辑，AI为可选项。由于接口响应一般多种多样，启用AI分析会大幅提升检出准确率，强烈建议试试！！时间是宝贵的，我们应该尽量让AI来替我们做那些耗时且重复的工作。**
 
