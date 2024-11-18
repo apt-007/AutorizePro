@@ -23,6 +23,7 @@ from javax.swing import JButton
 from javax.swing import JPanel
 from javax.swing import JLabel
 from javax.swing import JTextField
+from java.awt import Dimension
 
 from table import UpdateTableEDT
 
@@ -355,11 +356,17 @@ class ConfigurationTab():
             ))
         )
 
+        self.config_pnl.setMinimumSize(Dimension(0, 0))
+        self.config_pnl.setPreferredSize(Dimension(400, 200))
+
+        self._extender.filtersTabs.setMinimumSize(Dimension(0, 0))
+        self._extender.filtersTabs.setPreferredSize(Dimension(400, 400))
+
         self._extender._cfg_splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
         self._extender._cfg_splitpane.setResizeWeight(0.5)
-        self._extender._cfg_splitpane.setBounds(0, 0, 1000, 1000)
-        self._extender._cfg_splitpane.setRightComponent(self._extender.filtersTabs)
+        self._extender._cfg_splitpane.setContinuousLayout(True)
         self._extender._cfg_splitpane.setLeftComponent(self.config_pnl)
+        self._extender._cfg_splitpane.setRightComponent(self._extender.filtersTabs)
 
     def startOrStop(self, event):
         if self._extender.startButton.getText() == "AutorizePro is off":
