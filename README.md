@@ -31,7 +31,7 @@
 	1. 下载代码仓库zip包到本地，解压
     2. 打开 Burp Suite，导航到 Extender -> Extensions -> Add
     3. 在 Extension Type 选择框中，选择python
-    4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径
+    4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径 (注意路径不能有中文，否则安装失败)
 
 ### AutorizePro 插件安装完成界面 🎉
 > 💡 可通过 拉动 中间的侧边栏调整展示页和配置页的显示比例
