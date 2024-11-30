@@ -68,7 +68,6 @@ def collapse(extender, comp):
 
 def handle_proxy_message(self, message):
     currentPort = message.getListenerInterface().split(":")[1]
-
     for i in range(0, self.IFList.getModel().getSize()):
         interceptionFilter = self.IFList.getModel().getElementAt(i)
         interceptionFilterTitle = interceptionFilter.split(":")[0]
@@ -76,6 +75,5 @@ def handle_proxy_message(self, message):
         if interceptionFilterTitle == "Drop proxy listener ports":
             portsList = interceptionFilter[27:].split(",")
             portsList = [int(i) for i in portsList]
-
             if int(currentPort) in portsList:
                 message.setInterceptAction(IInterceptedProxyMessage.ACTION_DROP)

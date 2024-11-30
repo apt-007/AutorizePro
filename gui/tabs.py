@@ -117,8 +117,7 @@ class Tabs():
 
         # Bind the key combination to the action
         inputMap.put(controlC, "copyToClipBoard")
-        actionMap.put("copyToClipBoard",
-                      CopySelectedURLToClipBoard(self._extender, self._extender._callbacks))
+        actionMap.put("copyToClipBoard", CopySelectedURLToClipBoard(self._extender, self._extender._callbacks))
 
         sendResponseMenu = JMenuItem("Send Responses to Comparer")
         sendResponseMenu.addActionListener(SendResponseComparer(self._extender, self._extender._callbacks))

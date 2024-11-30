@@ -165,7 +165,7 @@ class Export():
                 )
             )
         )
-        
+
         layout.setVerticalGroup(layout.createSequentialGroup()
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(
@@ -237,10 +237,10 @@ class Export():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
-                )    
+                )
             )
         )
-         
+
 
 
     def export(self, event):
@@ -265,7 +265,7 @@ class Export():
             fileToSave = fileChooser.getSelectedFile()
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
-        htmlContent = """<html><title>AutorizePro Report by Barak Tawily</title>
+        htmlContent = """<html><title>Report from AutorizePro</title>
         <style>
         .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
             .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }

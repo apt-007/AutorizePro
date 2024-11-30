@@ -21,7 +21,6 @@ from javax.swing import JComboBox
 from javax.swing import GroupLayout
 from javax.swing import JScrollPane
 from javax.swing import DefaultListModel
-from javax.swing.border import LineBorder
 
 from helpers.filters import addFilterHelper, delFilterHelper, modFilterHelper
 

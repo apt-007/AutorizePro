@@ -39,19 +39,31 @@ def makeRequest(self, messageInfo, message):
 def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
     requestInfo = self._helpers.analyzeRequest(messageInfo)
     headers = requestInfo.getHeaders()
+    msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
+    oriMessage = self._helpers.buildHttpMessage(headers, msgBody)
+    modifiedFlag = False
 
     if removeOrNot:
         headers = list(headers)
         queryFlag = self.replaceQueryParam.isSelected()
 
         if queryFlag:
-            param = self.replaceString.getText().split("=")
-            paramKey = param[0]
-            paramValue = param[1]
-            pattern = r"([\?&]){}=.*?(?=[\s&])".format(paramKey)
-            patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1,
-                                   flags=re.DOTALL)
-            headers[0] = patchedHeader
+            requestLine = headers[0]
+            replaceParams = self.replaceString.getText().splitlines()
+
+            for param in replaceParams:
+                if '=' in param:
+                    paramKey, paramValue = param.split('=', 1)
+                    paramKey = paramKey.strip()
+                    paramValue = paramValue.strip()
+                    pattern = r'([?&]){}=[^&\s]*'.format(re.escape(paramKey))
+                    replacement = r'\1{}={}'.format(paramKey, paramValue)
+                    if re.search(pattern, requestLine):
+                        requestLine = re.sub(pattern, replacement, requestLine, count=0, flags=re.DOTALL)
+                else:
+                    print("url parameter format is wrong, should read 'key=value'，but it is'{}'".format(param))
+                    continue
+            headers[0] = requestLine
         else:
             removeHeaders = self.replaceString.getText()
             removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
@@ -86,7 +98,10 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                 msgBody = re.sub(v["regexMatch"], v["replace"], msgBody)
         msgBody = self._helpers.stringToBytes(msgBody)
 
-    return self._helpers.buildHttpMessage(headers, msgBody)
+    newMessage = self._helpers.buildHttpMessage(headers, msgBody)
+    if newMessage != oriMessage:
+        modifiedFlag = True
+    return newMessage, modifiedFlag
 
 
 def getRequestBody(self, messageInfo):
@@ -96,11 +111,11 @@ def getRequestBody(self, messageInfo):
     requestInfo = self._helpers.analyzeRequest(httpService, request)
 
     full_url = requestInfo.getUrl()
-
+    method = requestInfo.getMethod()
     body_offset = requestInfo.getBodyOffset()
     request_body = self._helpers.bytesToString(request[body_offset:])
 
-    return full_url, request_body
+    return full_url, method, request_body
 
 
 def getResponseHeaders(self, requestResponse):

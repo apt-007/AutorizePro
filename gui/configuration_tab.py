@@ -39,11 +39,14 @@ class ConfigurationTab():
         self._extender.startButton = JToggleButton("AutorizePro is off", actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
 
-        # AI 分析相关的配置：API Key输入框及启用复选框
-        self._extender.apiKeyField = JTextField(20)  # 用户输入API Key的文本框
+        self._extender.apiKeyField = JTextField(20)
         self._extender.apiKeyField.setBounds(50, 100, 200, 30)
-        self._extender.apiKeyEnabledCheckbox = JCheckBox("API-KEY")  # 启用AI分析的复选框
+        self._extender.apiKeyEnabledCheckbox = JCheckBox("KEY")
         self._extender.apiKeyEnabledCheckbox.setBounds(10, 60, 100, 30)
+        predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-standard", "hunyuan-large",]
+        self._extender.aiOptionComboBox = JComboBox(predefinedOptions)
+        self._extender.aiOptionComboBox.setBounds(50, 140, 200, 30)
+        self._extender.aiOptionComboBox.setSelectedItem("qwen-turbo")
 
         self._extender.clearButton = JButton("Clear List", actionPerformed=self.clearList)
         self._extender.clearButton.setBounds(10, 80, 100, 30)
@@ -67,18 +70,16 @@ class ConfigurationTab():
         self._extender.replaceQueryParam.setBounds(280, 85, 300, 30)
         self._extender.replaceQueryParam.setSelected(False)
 
-        self._extender.saveHeadersButton = JButton("Add",
-                                                   actionPerformed=self.saveHeaders)
-        self._extender.saveHeadersButton.setBounds(315, 115, 80, 30)
-
-        self._extender.removeHeadersButton = JButton("Remove",
-                                                     actionPerformed=self.removeHeaders)
-        self._extender.removeHeadersButton.setBounds(400, 115, 80, 30)
-
         savedHeadersTitles = self.getSavedHeadersTitles()
         self._extender.savedHeadersTitlesCombo = JComboBox(savedHeadersTitles)
         self._extender.savedHeadersTitlesCombo.addActionListener(SavedHeaderChange(self._extender))
-        self._extender.savedHeadersTitlesCombo.setBounds(10, 115, 300, 30)
+        self._extender.savedHeadersTitlesCombo.setBounds(10, 115, 100, 30)
+
+        self._extender.saveHeadersButton = JButton("Add", actionPerformed=self.saveHeaders)
+        self._extender.saveHeadersButton.setBounds(100, 115, 80, 30)
+
+        self._extender.removeHeadersButton = JButton("Remove", actionPerformed=self.removeHeaders)
+        self._extender.removeHeadersButton.setBounds(200, 115, 80, 30)
 
         self._extender.replaceString = JTextArea(self.DEFUALT_REPLACE_TEXT, 5, 30)
         self._extender.replaceString.setWrapStyleWord(True)
@@ -103,8 +104,8 @@ class ConfigurationTab():
 
         self._extender.filtersTabs = JTabbedPane()
         self._extender.filtersTabs = self._extender.filtersTabs
-        self._extender.filtersTabs.addTab("Enforcement Detector", self._extender.EDPnl)
-        self._extender.filtersTabs.addTab("Detector Unauthenticated", self._extender.EDPnlUnauth)
+        self._extender.filtersTabs.addTab("Privilege Enforcement Rules", self._extender.EDPnl)
+        self._extender.filtersTabs.addTab("Unauthorized Enforcement Rules", self._extender.EDPnlUnauth)
         self._extender.filtersTabs.addTab("Interception Filters", self._extender.filtersPnl)
         self._extender.filtersTabs.addTab("Match/Replace", self._extender.MRPnl)
         self._extender.filtersTabs.addTab("Table Filter", self._extender.filterPnl)
@@ -147,6 +148,14 @@ class ConfigurationTab():
                         GroupLayout.PREFERRED_SIZE,
                     )
                     )
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                    .addComponent(
+                        self._extender.aiOptionComboBox,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    )
                 )
                 .addComponent(
                     self._extender.clearButton,
@@ -154,12 +163,25 @@ class ConfigurationTab():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
+                .addGroup(layout.createSequentialGroup()
                 .addComponent(
                     self._extender.savedHeadersTitlesCombo,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
+                .addComponent(
+                    self._extender.saveHeadersButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.removeHeadersButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                ))
                 .addComponent(
                     scrollReplaceString,
                     GroupLayout.PREFERRED_SIZE,
@@ -225,18 +247,6 @@ class ConfigurationTab():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
-                .addComponent(
-                    self._extender.saveHeadersButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.removeHeadersButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
             )
         )
 
@@ -271,6 +281,12 @@ class ConfigurationTab():
             )
             .addComponent(
                 self._extender.apiKeyField,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self._extender.aiOptionComboBox,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
@@ -315,7 +331,6 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
             )
-            .addGroup(layout.createSequentialGroup()
             .addComponent(
                 self._extender.saveHeadersButton,
                 GroupLayout.PREFERRED_SIZE,
@@ -328,7 +343,6 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
             ))
-            )
             .addComponent(
                 scrollReplaceString,
                 GroupLayout.PREFERRED_SIZE,

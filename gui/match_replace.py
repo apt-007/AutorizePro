@@ -18,7 +18,6 @@ from javax.swing import JTextArea
 from javax.swing import JScrollPane
 from javax.swing import GroupLayout
 from javax.swing import DefaultListModel
-from javax.swing.border import LineBorder
 import re
 
 
@@ -90,7 +89,6 @@ class MatchReplace():
         self.scrollMRList.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)
         self.scrollMRList.setBounds(column2X, row5Y, editWidth, editHeight)
         self.scrollMRList.setPreferredSize(Dimension(editWidth, editHeight))
-        self.scrollMRList.setBorder(LineBorder(Color.BLACK))
 
         self._extender.MRAdd = JButton("Add filter", actionPerformed=self.addMRFilter)
         self._extender.MRAdd.setBounds(column2X, row4Y, buttonWidth, buttonHeight)

@@ -5,9 +5,8 @@
 @File   : initiator.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   : 初始化并设置插件的核心组件，负责绘制界面、设置常量和实现插件的关键功能。
+@Desc   :
 """
-
 from gui.enforcement_detector import EnforcementDetectors
 from gui.interception_filters import InterceptionFilters
 from gui.configuration_tab import ConfigurationTab
@@ -27,7 +26,7 @@ class Initiator():
         self._extender = extender
 
     def init_constants(self):
-        self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Sule01u"]
+        self.contributors = ["Barak Tawily", "Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Sule01u"]
         self._extender.version = 1.2
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
@@ -94,4 +93,4 @@ class Initiator():
 #######  #    #    #    #    #  #####   #    #     #       #        #####   #    # 
 #     #  #    #    #    #    #  #   #   #   #      #       #        #   #   #    # 
 #     #   ####     #     ####   #    #  #  ######  ######  #        #    #   ####  """)
-        print("""\n\n\nAuthor: Sule01u\nVersion: {}\nGithub: https://github.com/sule01u/AutorizePro\n\nThank you for installing the AutorizePro extension. We hope it enhances your workflow!""".format(self._extender.version))
+        print("""\n\n\nAuthor: Sule01u\nVersion: {}\nGithub: https://github.com/sule01u/AutorizePro\n\nThank you for installing the AutorizePro extension. We hope it enhances your workflow!\n""".format(self._extender.version))
