@@ -1,15 +1,18 @@
 ![image](https://github.com/user-attachments/assets/e61f8069-f775-419d-b020-37d0f0ee1227)
 
-# 🧿 AutorizePro (AI Analysis Module Now Available ❤️‍🔥):  Click star to support this project
-### AutorizePro is a Burp plugin specialized in detecting privilege escalation, developed based on the Autorize plugin. It is easy to install and use.
-> **⚠️ When the AI feature is not enabled, the plugin follows the normal detection logic. AI is optional. Since responses to APIs are typically varied, enabling AI analysis greatly improves detection accuracy. Highly recommended! Time is valuable, and we should let AI handle time-consuming and repetitive tasks whenever possible.**
+# 🧿 AutorizePro (AI Analysis Module is Live ❤️‍🔥):  
+### One-Sentence Introduction: AutorizePro is an innovative Burp plugin with a built-in AI analysis module, specialized in authorization bypass detection. (Don’t forget to give it a star 🌟)
+
+> **🟣️ When the AI feature is disabled, it uses the standard detection logic. AI analysis is optional but highly recommended. Due to the diverse nature of API responses, rule-based logic often falls short. Enabling AI analysis significantly improves efficiency and accuracy. Time is precious, so let AI handle repetitive and time-consuming tasks. Start discovering vulnerabilities at ten times the speed!**
 
 ### Tool Background
-- **Privilege escalation vulnerabilities are almost always tested in black-box testing and SRC vulnerability hunting. However, manually testing for privilege escalation vulnerabilities one by one can be time-consuming, while automated tools often generate many false positives. AutorizePro was created to address this issue.**
+- **Authorization bypass vulnerabilities are almost mandatory checks during black-box testing and SRC investigations, but manual testing for these vulnerabilities can be extremely time-consuming.**
+- **Automated tools, on the other hand, often suffer from high false positives due to the diverse nature of APIs. This gap led to the development of an AI-assisted analysis tool ➡️ AutorizePro !! ⬅️**
 
 ### Tool Highlights
-- **Optimized detection logic & added AI analysis module (optional), reducing the original tool's false-positive rate from 99% to 5%, freeing you from the sea of false positives.**
-- **For alerts that require manual confirmation, the tool displays the original request, the privilege escalation request, and the unauthorized request in parallel, making it easier to compare differences.**
+- **Optimized detection logic && added optional AI analysis module, reducing false-positive rates from 99% to 5%, liberating you from the sea of false positives.**
+- **For alerts that require manual confirmation, the tool provides a comparison view of the original request, unauthorized request, and authorization bypass attempt, making it easy to spot differences.**
+- **Supports various customizable options, including filter configurations, replacement rules, report exports, and integration with multiple large language models (defaulting to the outstanding Tongyi Qianwen).**
 
 ## 🔧 Installing AutorizePro
 ### 1️⃣ Download Burp Suite and Jython
@@ -25,13 +28,13 @@
 	4. Choose the Jython standalone JAR file you just downloaded (This project tests the env is: jython 2.7.3, java1.8, burp suite 2024.9).
 
 ### 3️⃣ Install the AutorizePro Plugin
-	1. Download the plugin to your local machine.
+	1. Download the latest release ZIP package from the code repository, extract it locally.
     2. Open Burp Suite, navigate to Extender -> Extensions -> Add.
     3. In the Extension Type dropdown, select python.
     4. In the Extension File field, choose the path to the `AutorizePro.py` file from the repository.
 
 ### AutorizePro Plugin Successfully Installed 🎉
-> 💡 The display ratio between the display page and the configuration page can be adjusted by pulling the sidebar in the middle (the full-screen display is basically normal, but when the screen is small (non-full-screen or laptop), only the display page may be seen, and the configuration page can be displayed by pulling the sidebar to the left, for subsequent optimization).
+> 💡 You can adjust the display ratio between the showcase page and the configuration page by dragging the middle sidebar. The configuration interface’s layout can be adjusted by dragging the divider up or down.
 
 ![cover](imgs/cover.png)
 
@@ -61,7 +64,14 @@
 ### 🌠 Example Usage Effect
 > 🌟 Drastically reduced false positives: As seen in the image below, after enabling AI analysis, you only need to analyze whether a request is truly unauthorized, saving over 95% of manual analysis effort.
 
+> ⬇️ Test privilege escalation by replacing cookies
+
 ![eg](imgs/eg.png)
+
+> ⬇️ Test privilege escalation by replacing parameters
+
+![eg2](imgs/eg2_en.png)
+
 > View the specific request determined by AI to be unauthorized, and simultaneously display the unauthorized request, original request, and unauthenticated request to easily compare differences.
 
 ![response](imgs/response.png)
@@ -88,12 +98,8 @@ If a particular endpoint responds with “Unauthorized” for privilege escalati
 ## 💰 How Much Does the AI Analysis Feature Cost? (By default, detection logic is followed, and AI is only activated when enabled by the user)
 - To minimize the costs associated with AI analysis, only packets with equal status codes, JSON format responses, and lengths under 3000 are analyzed when AI analysis is enabled. If conditions are not met, AI analysis will not activate.  
 - ⚠️ Note: When enabling AI analysis, you should configure the intercepted domains/rules in Interception Filters to avoid cost overruns caused by analyzing irrelevant sites.
-- The AI analysis feature requires activating the model service on [Aliyun Bailian](https://bailian.console.aliyun.com/#/home) via the prompt at the top of the page:
-![tongyi](imgs/tongyi.png)
-- [Aliyun Tongyi Qianwen API Billing Explanation](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) (Personal testing cost example: during high-frequency testing throughout a full day without domain restrictions, the total cost was **¥0.38**; actual costs are halved for production models, with faster speeds).
-<p>
-    <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
-</p>
+- Personal testing cost example: during high-frequency testing throughout a full day without domain restrictions, the total cost was **¥0.38** (tongyi qwen-plus).
+
 
 ## ⛪ Discussion
 * Bug reports or feature suggestions [Click Here](https://github.com/sule01u/AutorizePro/issues)
