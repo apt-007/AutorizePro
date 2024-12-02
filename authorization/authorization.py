@@ -323,22 +323,16 @@ def pre_check(self, oriUrl, reqMethod, oldStatusCode, newStatusCode, oldContent,
     if not modifyFlag:
         # print(oriUrl, " ---> Request not modified")
         return False
-    if newStatusCode != oldStatusCode:
-        # print(oriUrl, " ---> Status code changed: " + newStatusCode)
-        return False
-    if "GET" in str(reqMethod) and "?" not in str(oriUrl):
-        # print(oriUrl, " ---> GET request without parameters")
-        return False
-    if len(newContent) < 50 or not is_json_response(self, oldContent) or not is_json_response(self, newContent):
+    if not is_json_response(self, oldContent) or not is_json_response(self, newContent):
         # print(oriUrl, " ---> Response content not JSON or too short")
         return False
     return True
 
 
-def checkBypass(self, oriUrl, oriBody, oldContent, newContent, filters, requestResponse, andOrEnforcement, isAuthorized):
+def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, filters, requestResponse, andOrEnforcement, isAuthorized):
     AI_res = ""
     if isAuthorized and self.apiKeyEnabledCheckbox.isSelected():
-        if 50 < len(oldContent) < 6000:
+        if newStatusCode == oldStatusCode and 50 < len(oldContent) < 6000:
             apiKey = self.apiKeyField.getText()
             modelName = self.aiOptionComboBox.getSelectedItem()
             if apiKey:
@@ -649,7 +643,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     EDFilters = self.EDModel.toArray()
 
     if pre_check(self, oriUrl, reqMethod, oldStatusCode, newStatusCode, oldContent, newContent, modifyFlag):
-        impression, AI_res = checkBypass(self, oriUrl, oriBody, oldContent, newContent, EDFilters, requestResponse,
+        impression, AI_res = checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, EDFilters, requestResponse,
                                          self.AndOrType.getSelectedItem(), True)
     else:
         impression, AI_res = self.ENFORCED_STR, ""
@@ -657,7 +651,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     if checkUnauthorized:
         if pre_check(self, oriUrl, reqMethod, oldStatusCode, statusCodeUnauthorized, oldContent, newContent, modifyFlag):
             EDFiltersUnauth = self.EDModelUnauth.toArray()
-            impressionUnauthorized, _ = checkBypass(self, oriUrl, oriBody, oldContent, contentUnauthorized,
+            impressionUnauthorized, _ = checkBypass(self, oriUrl, oriBody, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized,
                                                          EDFiltersUnauth, requestResponseUnauthorized,
                                                          self.AndOrTypeUnauth.getSelectedItem(), False)
         else:
