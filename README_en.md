@@ -99,15 +99,14 @@ If a particular endpoint responds with “Unauthorized” for privilege escalati
 - To minimize the costs associated with AI analysis, only packets with equal status codes, JSON format responses, and lengths under 3000 are analyzed when AI analysis is enabled. If conditions are not met, AI analysis will not activate.  
 - ⚠️ Note: When enabling AI analysis, you should configure the intercepted domains/rules in Interception Filters to avoid cost overruns caused by analyzing irrelevant sites.
 - Personal testing cost example: during high-frequency testing throughout a full day without domain restrictions, the total cost was **¥0.38** (tongyi qwen-plus).
+- If you are outside China, you can choose the GPT or use alibabacloud model->[bailian](https://bailian.console.alibabacloud.com/)
 
 
 ## ⛪ Discussion
+* Welcome to discuss any tool-related questions [click here](https://github.com/sule01u/AutorizePro/discussions)
 * Bug reports or feature suggestions [Click Here](https://github.com/sule01u/AutorizePro/issues)
 * PRs Welcome
-* WeChat Public Account: **Scan to follow Bù Dǒng Ānquán for more security insights**
-<p>
-    <img alt="QR-code" src="https://suleo.wang/img/mine.png" width="30%" height="30%" style="max-width:20%;">
-</p>
+
 
 ## 🤗 Acknowledgments
 **This product is developed based on the [Autorize](https://github.com/Quitten/Autorize) plugin. Thanks to Barak Tawily.**
