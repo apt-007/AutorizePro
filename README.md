@@ -114,6 +114,7 @@
 </p>
 
 ## ⛪ Discussion
+* 欢迎讨论任何关于工具相关的问题[点我](https://github.com/sule01u/AutorizePro/discussions)
 * Bug 反馈或新功能建议[点我](https://github.com/sule01u/AutorizePro/issues)
 * 欢迎 PR
 * 微信公众号: **扫码关注不懂安全获取更多安全分享**
