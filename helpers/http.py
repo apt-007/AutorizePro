@@ -35,12 +35,9 @@ def makeRequest(self, messageInfo, message):
     return self._callbacks.makeHttpRequest(httpService, message)
 
 
-# 构建 HTTP 请求消息
 def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
     requestInfo = self._helpers.analyzeRequest(messageInfo)
     headers = requestInfo.getHeaders()
-    msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
-    oriMessage = self._helpers.buildHttpMessage(headers, msgBody)
     modifiedFlag = False
 
     if removeOrNot:
@@ -51,22 +48,51 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             requestLine = headers[0]
             replaceParams = self.replaceString.getText().splitlines()
 
-            for param in replaceParams:
-                if '=' in param:
-                    paramKey, paramValue = param.split('=', 1)
-                    paramKey = paramKey.strip()
-                    paramValue = paramValue.strip()
-                    pattern = r'([?&]){}=[^&\s]*'.format(re.escape(paramKey))
-                    replacement = r'\1{}={}'.format(paramKey, paramValue)
-                    if re.search(pattern, requestLine):
-                        requestLine = re.sub(pattern, replacement, requestLine, count=0, flags=re.DOTALL)
+            method, url, protocol = requestLine.split(" ", 2)
+            path_and_query = url.split("?", 1)
+            path = path_and_query[0]
+            query = path_and_query[1] if len(path_and_query) > 1 else ""
+            if authorizeOrNot:
+                for param in replaceParams:
+                    if '=' in param:
+                        if param.startswith("path:"):
+                            paramKey, paramValue = param[5:].split('=', 1)
+                            paramKey = paramKey.strip()
+                            paramValue = paramValue.strip()
+                            pattern = r'(?<!\w){}(?!\w)'.format(re.escape(paramKey))
+                            newPath = re.sub(pattern, paramValue, path)
+                            if newPath != path:
+                                modifiedFlag = True
+                                path = newPath
+                        else:
+                            paramKey, paramValue = param.split('=', 1)
+                            paramKey = paramKey.strip()
+                            paramValue = paramValue.strip()
+                            pattern = r'([?&]){}=[^&\s]*'.format(re.escape(paramKey))
+                            replacement = r'\1{}={}'.format(paramKey, paramValue)
+                            newQuery = re.sub(pattern, replacement, query, count=0, flags=re.DOTALL)
+                            if newQuery != query:
+                                modifiedFlag = True
+                                query = newQuery
+                    else:
+                        print("Skipping invalid replacement rule: '{}'".format(param))
+                        continue
+
+                if query:
+                    new_url = "{}?{}".format(path, query)
                 else:
-                    print("url parameter format is wrong, should read 'key=value'，but it is'{}'".format(param))
-                    continue
-            headers[0] = requestLine
+                    new_url = path
+                headers[0] = "{} {} {}".format(method, new_url, protocol)
+            else:
+                for header in headers[:]:
+                    if header.lower().startswith("Cookie:".lower()) or header.lower().startswith("Authorization:".lower()):
+                        headers.remove(header)
         else:
-            removeHeaders = self.replaceString.getText()
-            removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
+            removeHeadersStr = self.replaceString.getText()
+            if authorizeOrNot:
+                removeHeaders = [header for header in removeHeadersStr.split() if header.endswith(':')]
+            else:
+                removeHeaders = [header.strip() for header in removeHeadersStr.split() if header if header.startswith("Cookie:") or header.startswith("Authorization:")]
             for header in headers[:]:
                 for removeHeader in removeHeaders:
                     if header.lower().startswith(removeHeader.lower()):
@@ -75,17 +101,22 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         if authorizeOrNot:
             for k, v in self.badProgrammerMRModel.items():
                 if v["type"] == "Headers (simple string):":
-                    headers = map(lambda h: h.replace(v["match"], v["replace"]), headers)
+                    newHeaders = [h.replace(v["match"], v["replace"]) for h in headers]
+                    if newHeaders != headers:
+                        modifiedFlag = True
+                    headers = newHeaders
                 if v["type"] == "Headers (regex):":
-                    headers = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers)
+                    newHeaders = [re.sub(v["regexMatch"], v["replace"], h) for h in headers]
+                    if newHeaders != headers:
+                        modifiedFlag = True
+                    headers = newHeaders
 
             if not queryFlag:
-                replaceStringLines = self.replaceString.getText().split("\n")
+                replaceStringLines = self.replaceString.getText().splitlines()
                 for h in replaceStringLines:
-                    if h == "":
-                        pass
-                    else:
+                    if h:
                         headers.append(h)
+                        modifiedFlag = True
 
     msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
 
@@ -93,14 +124,19 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         msgBody = self._helpers.bytesToString(msgBody)
         for k, v in self.badProgrammerMRModel.items():
             if v["type"] == "Body (simple string):":
-                msgBody = msgBody.replace(v["match"], v["replace"])
+                newBody = msgBody.replace(v["match"], v["replace"])
+                if newBody != msgBody:
+                    modifiedFlag = True
+                msgBody = newBody
             if v["type"] == "Body (regex):":
-                msgBody = re.sub(v["regexMatch"], v["replace"], msgBody)
+                newBody = re.sub(v["regexMatch"], v["replace"], msgBody)
+                if newBody != msgBody:
+                    modifiedFlag = True
+                msgBody = newBody
         msgBody = self._helpers.stringToBytes(msgBody)
 
     newMessage = self._helpers.buildHttpMessage(headers, msgBody)
-    if newMessage != oriMessage:
-        modifiedFlag = True
+
     return newMessage, modifiedFlag
 
 
@@ -111,11 +147,11 @@ def getRequestBody(self, messageInfo):
     requestInfo = self._helpers.analyzeRequest(httpService, request)
 
     full_url = requestInfo.getUrl()
-    method = requestInfo.getMethod()
+    request_method = requestInfo.getMethod()
     body_offset = requestInfo.getBodyOffset()
     request_body = self._helpers.bytesToString(request[body_offset:])
 
-    return full_url, method, request_body
+    return full_url, request_method, request_body
 
 
 def getResponseHeaders(self, requestResponse):

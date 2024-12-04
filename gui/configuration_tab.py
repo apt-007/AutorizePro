@@ -401,7 +401,7 @@ class ConfigurationTab():
 
     def replaceQueryHanlder(self, event):
         if self._extender.replaceQueryParam.isSelected():
-            self._extender.replaceString.setText("paramName=paramValue")
+            self._extender.replaceString.setText("paramName=paramValue\npath:oldPath=newPath")
         else:
             self._extender.replaceString.setText(self.DEFUALT_REPLACE_TEXT)
 
