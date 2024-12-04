@@ -1,7 +1,7 @@
 ![image](https://github.com/user-attachments/assets/e61f8069-f775-419d-b020-37d0f0ee1227)
 
 # 🧿 AutorizePro (AI Analysis Module is Live ❤️‍🔥):  
-### One-Sentence Introduction: AutorizePro is an innovative Burp plugin with a built-in AI analysis module, specialized in authorization bypass detection. (Updated every weekend, welcome to Star🌟 to keep track of the latest version of the project features)
+### One-Sentence Introduction: AutorizePro is an innovative Burp plugin with a built-in AI analysis module, specialized in authorization bypass detection. (The tool has helped multiple bounty hunters find vulnerabilities，updated every weekend, welcome to Star🌟 to keep track of the latest version of the project features)
 
 > **🟣️ When the AI feature is disabled, it uses the standard detection logic. AI analysis is optional but highly recommended. Due to the diverse nature of API responses, rule-based logic often falls short. Enabling AI analysis significantly improves efficiency and accuracy. Time is precious, so let AI handle repetitive and time-consuming tasks. Start discovering vulnerabilities at ten times the speed!**
 
