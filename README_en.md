@@ -25,7 +25,7 @@
 	1. Open Burp Suite.
 	2. Navigate to Extender -> Options.
 	3. In the Python Environment section, click Select File.
-	4. Choose the Jython standalone JAR file you just downloaded (This project tests the env is: jython 2.7.3, java1.8, burp suite 2024.9).
+	4. Choose the Jython standalone JAR file you just downloaded (This project tests the env is: jython 2.7.3, burp suite 2024.11(The built-in java version is java22)).
 
 ### 3️⃣ Install the AutorizePro Plugin
 	1. Download the latest release ZIP package from the code repository, extract it locally.
