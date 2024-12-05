@@ -27,7 +27,7 @@
 	1. 打开 Burp Suite
 	2. 导航到 Extender -> Options
 	3. 在 Python Environment 部分，点击 Select File
-	4. 选择你刚刚下载的 Jython standalone JAR 文件 (本项目测试环境为: jython 2.7.3, java1.8, burp suite 2024.9)
+	4. 选择你刚刚下载的 Jython standalone JAR 文件 (本项目测试环境为: jython 2.7.3, burp suite 2024.11（自带的java版本为java22）)
 
 ### 3️⃣ 安装 AutorizePro 插件
 	1. 下载代码仓库最新版本的发布zip包到本地，解压
