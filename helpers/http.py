@@ -84,7 +84,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                     new_url = path
                 headers[0] = "{} {} {}".format(method, new_url, protocol)
             else:
-                for header in headers[:]:
+                for header in headers[1:]:
                     if header.lower().startswith("Cookie:".lower()) or header.lower().startswith("Authorization:".lower()):
                         headers.remove(header)
         else:
@@ -93,7 +93,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                 removeHeaders = [header for header in removeHeadersStr.split() if header.endswith(':')]
             else:
                 removeHeaders = [header.strip() for header in removeHeadersStr.split() if header if header.startswith("Cookie:") or header.startswith("Authorization:")]
-            for header in headers[:]:
+            for header in headers[1:]:
                 for removeHeader in removeHeaders:
                     if header.lower().startswith(removeHeader.lower()):
                         headers.remove(header)
@@ -101,12 +101,14 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         if authorizeOrNot:
             for k, v in self.badProgrammerMRModel.items():
                 if v["type"] == "Headers (simple string):":
-                    newHeaders = [h.replace(v["match"], v["replace"]) for h in headers]
+                    modifiedHeaders = map(lambda h: h.replace(v["match"], v["replace"]), headers[1:])
+                    headers = [headers[0]] + modifiedHeaders
                     if newHeaders != headers:
                         modifiedFlag = True
                     headers = newHeaders
                 if v["type"] == "Headers (regex):":
-                    newHeaders = [re.sub(v["regexMatch"], v["replace"], h) for h in headers]
+                    modifiedHeaders = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers[1:])
+                    headers = [headers[0]] + modifiedHeaders
                     if newHeaders != headers:
                         modifiedFlag = True
                     headers = newHeaders
