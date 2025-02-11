@@ -43,7 +43,7 @@ class ConfigurationTab():
         self._extender.apiKeyField.setBounds(50, 100, 200, 30)
         self._extender.apiKeyEnabledCheckbox = JCheckBox("KEY")
         self._extender.apiKeyEnabledCheckbox.setBounds(10, 60, 100, 30)
-        predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-standard", "hunyuan-large",]
+        predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "deepseek-chat","deepseek-reasoner","gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-standard", "hunyuan-large",]
         self._extender.aiOptionComboBox = JComboBox(predefinedOptions)
         self._extender.aiOptionComboBox.setBounds(50, 140, 200, 30)
         self._extender.aiOptionComboBox.setSelectedItem("qwen-turbo")
