@@ -5,7 +5,7 @@
 @File   : authorization.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   :
+@Desc   : 
 """
 import sys
 import re
