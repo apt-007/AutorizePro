@@ -619,7 +619,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         impression, AI_res = self.ENFORCED_STR, ""
 
     if checkUnauthorized:
-        if pre_check(self, oldStatusCode, statusCodeUnauthorized, oldContent, newContent, modifyFlag=True):
+        if pre_check(self, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized, modifyFlag=True):
             EDFiltersUnauth = self.EDModelUnauth.toArray()
             impressionUnauthorized, _ = checkBypass(self, oriUrl, oriBody, oldStatusCode, statusCodeUnauthorized,
                                                     oldContent, contentUnauthorized,
