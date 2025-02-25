@@ -515,7 +515,7 @@ def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
 def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
     try:
         url = URL("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
-        if modelName.startswith("depseek"):
+        if modelName.startswith("deepseek"):
             url = URL("https://api.deepseek.com/v1/chat/completions")
         elif modelName.startswith("gpt"):
             url = URL("https://api.openai.com/v1/chat/completions")
