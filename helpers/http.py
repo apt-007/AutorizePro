@@ -85,14 +85,14 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                 headers[0] = "{} {} {}".format(method, new_url, protocol)
             else:
                 for header in headers[1:]:
-                    if header.lower().startswith("Cookie:".lower()) or header.lower().startswith("Authorization:".lower()):
+                    if header.lower().startswith(("cookie:", "authorization:", "token")):
                         headers.remove(header)
         else:
             removeHeadersStr = self.replaceString.getText()
             if authorizeOrNot:
                 removeHeaders = [header for header in removeHeadersStr.split() if header.endswith(':')]
             else:
-                removeHeaders = [header.strip() for header in removeHeadersStr.split() if header if header.startswith("Cookie:") or header.startswith("Authorization:")]
+                removeHeaders = [header.strip() for header in removeHeadersStr.split() if header if header.lower().startswith(("cookie:", "authorization:", "token"))]
             for header in headers[1:]:
                 for removeHeader in removeHeaders:
                     if header.lower().startswith(removeHeader.lower()):
