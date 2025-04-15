@@ -1,4 +1,5 @@
 *.class
-.jython_cache
+.jython_cache/
 .autorize/
-.idea
+.idea/
+.vscode/
