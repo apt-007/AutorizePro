@@ -390,13 +390,23 @@ def read_response(self, stream):
 
 def extract_res_value(self, response_string):
     try:
+        # 尝试匹配转义的引号格式（通义千问）
         match = re.search(r'.*res\\":\\"(true|false|unknown)', response_string, re.DOTALL)
         if match:
-            res_value = match.group(1)
-            return res_value
-        else:
-            print("No 'res' field found in AI api response.")
-            return ""
+            return match.group(1)
+            
+        # 尝试匹配未转义的引号格式（混元）
+        match = re.search(r'.*res":\s*"(true|false|unknown)"', response_string, re.DOTALL)
+        if match:
+            return match.group(1)
+            
+        # 尝试匹配 content 字段中的 JSON 字符串
+        match = re.search(r'"content":\s*"{\\?"res\\?":\s*\\?"(true|false|unknown)\\?"', response_string, re.DOTALL)
+        if match:
+            return match.group(1)
+            
+        print("No 'res' field found in AI api response.")
+        return ""
     except Exception as e:
         self._callbacks.printError("An error occurred while extracting 'res' field: " + str(e))
         return ""
@@ -438,7 +448,7 @@ def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
                  - 若响应 B 包含响应 A 中业务数据对应的字段结构，但字段内容变为与他人资源有关（如他人资源的 ID、名称等）的值 或 字段内容值为null(因为b可能确实没数据，不代表越权失败)，皆判定为越权成功。。
                  - 若响应 A 和 B 中都存在 `success` 字段且值为 `true`，结构一致且响应内容较短无公开接口信息，则可能为操作接口成功，判定越权成功。
                - **越权失败（false）**：
-                 - 若响应 B 明确返回错误信息（如“权限不足”、“资源不可访问”或 HTTP 状态码 403/401 等），判定为越权失败。
+                 - 若响应 B 明确返回错误信息（如"权限不足"、"资源不可访问"或 HTTP 状态码 403/401 等），判定为越权失败。
                  - 若响应 A 和 B 的非动态字段结构、字段值完全一致，判定越权失败。
                  - 若响应 A 和 B 的字段结构显著不同（如字段数量、层级、命名等差异），尤其是 B 的内容与 A 的响应中的类型明显不相关，判定为越权失败。
                  - 若响应 B 包含字段跟响应 A 中的业务字段完全无关，判定为越权失败。
@@ -483,7 +493,7 @@ def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
                  - 若响应 A 和 B 中都存在 `success` 字段且值为 `true`，结构一致且响应内容较短无公开信息，也判定越权成功。
                - **越权失败（false）**：
                  - 若响应 B 与响应 A 的结构和内容明显不同，尤其是结构不一致，判定为越权失败。
-                 - 若响应 B 包含“权限不足”或“需要登录”等错误信息，判定为越权失败。
+                 - 若响应 B 包含"权限不足"或"需要登录"等错误信息，判定为越权失败。
                  - 若响应 A 和 B 的结构一致，但账号特征字段（如用户名、邮箱、userid 等）中的值显示为账号 B 的信息而非账号 A 的信息，判定为越权失败。
                - **其他情况（unknown）**：
                  - 若响应 B 包含与账号 A 无关的业务数据或敏感数据，但无法明确判断是否越权，则返回未知（unknown）。
@@ -527,7 +537,7 @@ def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
         connection.setRequestMethod("POST")
         connection.setDoOutput(True)
         connection.setConnectTimeout(20000)
-        connection.setReadTimeout(30000)
+        connection.setReadTimeout(60000)
 
         connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
         connection.setRequestProperty("Authorization", "Bearer " + api_key)
