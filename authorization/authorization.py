@@ -10,11 +10,13 @@
 import sys
 import re
 import datetime
+import time
 from java.net import URL, HttpURLConnection
 from java.io import BufferedReader, InputStreamReader, OutputStreamWriter, EOFException, IOException
 from java.lang import StringBuilder
 from javax.swing import SwingUtilities
-from javax.net.ssl import SSLHandshakeException
+from javax.net.ssl import SSLHandshakeException, SSLSocketFactory
+from java.net import SocketException
 
 reload(sys)
 
@@ -523,79 +525,130 @@ def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
 
 
 def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
-    try:
-        url = URL("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
-        if modelName.startswith("deepseek"):
-            url = URL("https://api.deepseek.com/v1/chat/completions")
-        elif modelName.startswith("gpt"):
-            url = URL("https://api.openai.com/v1/chat/completions")
-        elif modelName.startswith("glm"):
-            url = URL("https://open.bigmodel.cn/api/paas/v4/chat/completions")
-        elif modelName.startswith("hunyuan"):
-            url = URL("https://api.hunyuan.cloud.tencent.com/v1/chat/completions")
-        connection = url.openConnection()
-        connection.setRequestMethod("POST")
-        connection.setDoOutput(True)
-        connection.setConnectTimeout(20000)
-        connection.setReadTimeout(60000)
+    max_retries = 3
+    retry_count = 0
+    retry_delay = 2  # 初始重试延迟（秒）
+    
+    while retry_count < max_retries:
+        try:
+            url = URL("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
+            api_url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+            if modelName.startswith("deepseek"):
+                url = URL("https://api.deepseek.com/v1/chat/completions")
+                api_url = "https://api.deepseek.com/v1/chat/completions"
+            elif modelName.startswith("gpt"):
+                url = URL("https://api.openai.com/v1/chat/completions")
+                api_url = "https://api.openai.com/v1/chat/completions"
+            elif modelName.startswith("glm"):
+                url = URL("https://open.bigmodel.cn/api/paas/v4/chat/completions")
+                api_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+            elif modelName.startswith("hunyuan"):
+                url = URL("https://api.hunyuan.cloud.tencent.com/v1/chat/completions")
+                api_url = "https://api.hunyuan.cloud.tencent.com/v1/chat/completions"
+                
+            connection = url.openConnection()
+            connection.setRequestMethod("POST")
+            connection.setDoOutput(True)
+            connection.setConnectTimeout(30000)
+            connection.setReadTimeout(60000)
 
-        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-        connection.setRequestProperty("Authorization", "Bearer " + api_key)
+            if hasattr(connection, 'setSSLSocketFactory'):
+                connection.setSSLSocketFactory(SSLSocketFactory.getDefault())
+                connection.setHostnameVerifier(lambda hostname, session: True)
 
-        # print("Request Body Before Encoding:\n" + request_body)
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            connection.setRequestProperty("Authorization", "Bearer " + api_key)
 
-        outputStream = connection.getOutputStream()
-        writer = OutputStreamWriter(outputStream, "UTF-8")
-        writer.write(request_body)
-        writer.flush()
-        writer.close()
-        outputStream.close()
+            outputStream = connection.getOutputStream()
+            writer = OutputStreamWriter(outputStream, "UTF-8")
+            writer.write(request_body)
+            writer.flush()
+            writer.close()
+            outputStream.close()
 
-        responseCode = connection.getResponseCode()
+            responseCode = connection.getResponseCode()
 
-        if responseCode == HttpURLConnection.HTTP_OK or responseCode == HttpURLConnection.HTTP_CREATED:
-            inputStream = connection.getInputStream()
-            AI_res = read_response(self, inputStream)
-            res_value = extract_res_value(self, AI_res)
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            json_log = '{\n' \
-                       '\t"timestamp": "%s",\n ' \
-                       '\t"orig_url": "%s",\n ' \
-                       '\t"ai_api_status": "%s",\n ' \
-                       '\t"ai_analysis_result": "%s"\n ' \
-                       '\t"ai_original_response": "%s"\n ' \
-                       '}\n' % (
-                           timestamp,
-                           str(orgUrl),
-                           str(responseCode),
-                           str(res_value),
-                           str(AI_res) if str(AI_res) else 'N/A'
-                       )
+            if responseCode == HttpURLConnection.HTTP_OK or responseCode == HttpURLConnection.HTTP_CREATED:
+                inputStream = connection.getInputStream()
+                AI_res = read_response(self, inputStream)
+                res_value = extract_res_value(self, AI_res)
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                json_log = '{\n' \
+                           '\t"timestamp": "%s",\n ' \
+                           '\t"orig_url": "%s",\n ' \
+                           '\t"ai_api_status": "%s",\n ' \
+                           '\t"ai_analysis_result": "%s"\n ' \
+                           '\t"ai_original_response": "%s"\n ' \
+                           '}\n' % (
+                               timestamp,
+                               str(orgUrl),
+                               str(responseCode),
+                               str(res_value),
+                               str(AI_res) if str(AI_res) else 'N/A'
+                           )
 
-            print(json_log)
+                print(json_log)
 
-            if res_value:
-                return res_value
-            return ""
-        else:
-            errorStream = connection.getErrorStream()
-            if errorStream is not None:
-                error_response = read_response(self, errorStream)
-                print("Error Response :: " + error_response)
+                if res_value:
+                    return res_value
+                return ""
             else:
-                print("POST request failed with response code " + str(responseCode))
-            return ""
-    except SSLHandshakeException:
-        self._callbacks.printError(
-            "SSL handshake failure: A secure connection cannot be established with the server. Please check your network Settings")
-        return ""
-    except EOFException:
-        self._callbacks.printError(
-            "The api connection was closed by the remote host. Please check your Internet connection.")
-        return ""
-    except Exception as e:
-        self._callbacks.printError("An error occurred: " + str(e))
-        return ""
+                errorStream = connection.getErrorStream()
+                if errorStream is not None:
+                    error_response = read_response(self, errorStream)
+                    print("Error Response :: Target URL: %s, API: %s, Response: %s" % (str(orgUrl), api_url, error_response))
+                    
+                    # 检查是否是频率限制错误
+                    if '稍后重试' in error_response or "稍后重试" in error_response:
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            wait_time = retry_delay * (2 ** (retry_count - 1))  # 指数退避
+                            self._callbacks.printError(
+                                "Rate limit hit for target URL %s, waiting %d seconds before retry (attempt %d/%d)" % 
+                                (str(orgUrl), wait_time, retry_count + 1, max_retries))
+                            time.sleep(wait_time)
+                            continue
+                else:
+                    print("POST request failed for target URL %s with response code %s" % (str(orgUrl), str(responseCode)))
+                return ""
+                
+        except SSLHandshakeException as e:
+            self._callbacks.printError(
+                "SSL handshake failure for target URL %s (attempt %d/%d): %s" % 
+                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            retry_count += 1
+            if retry_count == max_retries:
+                return ""
+            continue
+            
+        except EOFException as e:
+            self._callbacks.printError(
+                "Connection closed for target URL %s (attempt %d/%d): %s" % 
+                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            retry_count += 1
+            if retry_count == max_retries:
+                return ""
+            continue
+            
+        except SocketException as e:
+            self._callbacks.printError(
+                "Socket error for target URL %s (attempt %d/%d): %s" % 
+                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            retry_count += 1
+            if retry_count == max_retries:
+                return ""
+            continue
+            
+        except Exception as e:
+            self._callbacks.printError(
+                "An error occurred for target URL %s (attempt %d/%d): %s" % 
+                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            retry_count += 1
+            if retry_count == max_retries:
+                return ""
+            continue
+            
+    return ""
 
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
