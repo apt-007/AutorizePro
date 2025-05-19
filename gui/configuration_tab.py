@@ -23,50 +23,88 @@ from javax.swing import JButton
 from javax.swing import JPanel
 from javax.swing import JLabel
 from javax.swing import JTextField
+from javax.swing import ComboBoxEditor
+from javax.swing import JPopupMenu, JMenuItem
 from java.awt import Dimension
+from javax.swing.event import DocumentListener
 
 from table import UpdateTableEDT
+from localization.language_manager import get_text, get_language_manager
+from localization.ui_updater import update_main_ui, update_table_headers
 
 
 class ConfigurationTab():
     def __init__(self, extender):
         self._extender = extender
+        # 先创建所有UI组件
+        self.draw()
+        # 移除实时验证监听器
+        # self._extender.aiModelTextField.getDocument().addDocumentListener(DocumentListener(self._extender))
 
     def draw(self):
         """  init configuration tab
         """
         self.DEFUALT_REPLACE_TEXT = "Cookie: Insert=injected; cookie=or;\nHeader: here"
-        self._extender.startButton = JToggleButton("AutorizePro is off", actionPerformed=self.startOrStop)
+        self._extender.startButton = JToggleButton(get_text("autorize_is_off", "AutorizePro is off"), actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
+        
+        # 添加语言切换按钮 - 特殊处理按钮文本以确保中文正确显示
+        toggle_text = get_text("language_toggle", "EN/中")
+        # 尝试使用Java String确保Unicode字符正确显示
+        try:
+            from java.lang import String
+            toggle_text = String(toggle_text) if isinstance(toggle_text, unicode) else String(toggle_text.decode('utf-8'))
+        except:
+            pass
+        self._extender.toggleLanguageButton = JButton(toggle_text, actionPerformed=self.toggleLanguage)
+        self._extender.toggleLanguageButton.setBounds(245, 20, 60, 30)
 
         self._extender.apiKeyField = JTextField(20)
         self._extender.apiKeyField.setBounds(50, 100, 200, 30)
-        self._extender.apiKeyEnabledCheckbox = JCheckBox("KEY")
+        self._extender.apiKeyEnabledCheckbox = JCheckBox(get_text("enable_ai", "KEY"), actionPerformed=self.validateModelOnKeyToggle)
         self._extender.apiKeyEnabledCheckbox.setBounds(10, 60, 100, 30)
-        predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "deepseek-chat","deepseek-reasoner","gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-standard", "hunyuan-large",]
-        self._extender.aiOptionComboBox = JComboBox(predefinedOptions)
-        self._extender.aiOptionComboBox.setBounds(50, 140, 200, 30)
-        self._extender.aiOptionComboBox.setSelectedItem("qwen-turbo")
+        # 改用文本框 + 下拉按钮组合
+        # 1. 创建文本框和按钮，确保Y坐标和高度完全相同
+        yPos = 140  # 使用同一个Y坐标变量
+        height = 25  # 使用统一的高度
+        
+        # 缩短编辑框宽度
+        self._extender.aiModelTextField = JTextField("qwen-turbo", 7)
+        self._extender.aiModelTextField.setBounds(50, yPos, 95, height)
+        
+        # 2. 创建下拉按钮 - 使用相同的Y坐标和高度确保对齐，使用ASCII字符避免乱码
+        self._extender.modelSelectButton = JButton("+", actionPerformed=self.showModelOptions)
+        self._extender.modelSelectButton.setBounds(145, yPos, 25, height)
+        
+        # 3. 预设模型列表
+        self._predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "deepseek-chat","deepseek-reasoner",
+                                  "gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-lite", "hunyuan-standard"]
+        
+        # 添加支持的模型厂商列表
+        self._supportedVendors = ["qwen", "deepseek", "gpt", "glm", "hunyuan"]
+        
+        # 4. 创建模型选择菜单(将在点击按钮时显示)
+        self._modelPopupMenu = JPopupMenu()
 
-        self._extender.clearButton = JButton("Clear List", actionPerformed=self.clearList)
+        self._extender.clearButton = JButton(get_text("clear_button", "Clear List"), actionPerformed=self.clearList)
         self._extender.clearButton.setBounds(10, 80, 100, 30)
-        self._extender.autoScroll = JCheckBox("Auto Scroll")
+        self._extender.autoScroll = JCheckBox(get_text("auto_scroll", "Auto Scroll"))
         self._extender.autoScroll.setBounds(145, 80, 130, 30)
 
-        self._extender.ignore304 = JCheckBox("Ignore 304/204 status code responses")
+        self._extender.ignore304 = JCheckBox(get_text("ignore_304", "Ignore 304/204 status code responses"))
         self._extender.ignore304.setBounds(280, 5, 300, 30)
         self._extender.ignore304.setSelected(True)
 
-        self._extender.prevent304 = JCheckBox("Prevent 304 Not Modified status code")
+        self._extender.prevent304 = JCheckBox(get_text("prevent_304", "Prevent 304 Not Modified status code"))
         self._extender.prevent304.setBounds(280, 25, 300, 30)
-        self._extender.interceptRequestsfromRepeater = JCheckBox("Intercept requests from Repeater")
+        self._extender.interceptRequestsfromRepeater = JCheckBox(get_text("intercept_from_repeater", "Intercept requests from Repeater"))
         self._extender.interceptRequestsfromRepeater.setBounds(280, 45, 300, 30)
 
-        self._extender.doUnauthorizedRequest = JCheckBox("Check unauthenticated")
+        self._extender.doUnauthorizedRequest = JCheckBox(get_text("check_unauthenticated", "Check unauthenticated"))
         self._extender.doUnauthorizedRequest.setBounds(280, 65, 300, 30)
         self._extender.doUnauthorizedRequest.setSelected(True)
 
-        self._extender.replaceQueryParam = JCheckBox("Replace query params", actionPerformed=self.replaceQueryHanlder)
+        self._extender.replaceQueryParam = JCheckBox(get_text("replace_query_params", "Replace query params"), actionPerformed=self.replaceQueryHanlder)
         self._extender.replaceQueryParam.setBounds(280, 85, 300, 30)
         self._extender.replaceQueryParam.setSelected(False)
 
@@ -89,18 +127,37 @@ class ConfigurationTab():
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollReplaceString.setBounds(10, 150, 470, 150)
 
-        fromLastRequestLabel = JLabel("From last request:")
+        fromLastRequestLabel = JLabel(get_text("from_last_request", "From last request:"))
         fromLastRequestLabel.setBounds(10, 305, 250, 30)
 
-        self._extender.fetchCookiesHeaderButton = JButton("Fetch Cookies header",
+        self._extender.fetchCookiesHeaderButton = JButton(get_text("fetch_cookie_button", "Fetch Cookies header"),
                                                           actionPerformed=self.fetchCookiesHeader)
         self._extender.fetchCookiesHeaderButton.setEnabled(False)
         self._extender.fetchCookiesHeaderButton.setBounds(10, 330, 220, 30)
 
-        self._extender.fetchAuthorizationHeaderButton = JButton("Fetch Authorization header",
+        self._extender.fetchAuthorizationHeaderButton = JButton(get_text("fetch_authorization_button", "Fetch Authorization header"),
                                                                 actionPerformed=self.fetchAuthorizationHeader)
         self._extender.fetchAuthorizationHeaderButton.setEnabled(False)
         self._extender.fetchAuthorizationHeaderButton.setBounds(260, 330, 220, 30)
+        
+        # 添加20像素的垂直间距
+        verticalSpacerPanel = JPanel()
+        verticalSpacerPanel.setPreferredSize(Dimension(1, 20))
+
+        # 添加认证头配置区域 - 移到fetchCookiesHeaderButton下方
+        self._extender.authHeadersLabel = JLabel(get_text("auth_headers_label", "Authentication Headers:"))
+        self._extender.authHeadersLabel.setBounds(10, 370, 300, 30)
+        
+        # 默认的认证头类型
+        default_auth_headers = "cookie,authorization,token"
+        self._extender.custom_auth_headers = default_auth_headers.split(",")
+        
+        self._extender.authHeadersField = JTextField(default_auth_headers)
+        self._extender.authHeadersField.setBounds(10, 400, 200, 30)
+        self._extender.authHeadersField.setToolTipText(get_text("auth_headers_tooltip", "Comma-separated list of authentication header names"))
+        
+        self._extender.updateAuthHeadersButton = JButton(get_text("update_auth_headers", "Update"), actionPerformed=self.updateAuthHeaders)
+        self._extender.updateAuthHeadersButton.setBounds(400, 400, 90, 30)
 
         self._extender.filtersTabs = JTabbedPane()
         self._extender.filtersTabs = self._extender.filtersTabs
@@ -124,11 +181,20 @@ class ConfigurationTab():
             layout.createSequentialGroup()
             .addGroup(
                 layout.createParallelGroup()
-                .addComponent(
-                    self._extender.startButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
+                .addGroup(
+                    layout.createSequentialGroup()
+                    .addComponent(
+                        self._extender.startButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.toggleLanguageButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
                 )
                 .addGroup(
                     layout.createSequentialGroup()
@@ -149,11 +215,19 @@ class ConfigurationTab():
                     )
                     )
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                    .addGroup(layout.createSequentialGroup()
                     .addComponent(
-                        self._extender.aiOptionComboBox,
+                        self._extender.aiModelTextField,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.modelSelectButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
                     )
                     )
                 )
@@ -203,6 +277,32 @@ class ConfigurationTab():
                 )
                 .addComponent(
                     self._extender.fetchAuthorizationHeaderButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                )
+                .addComponent(
+                    verticalSpacerPanel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.authHeadersLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addGroup(layout.createSequentialGroup()
+                .addComponent(
+                    self._extender.authHeadersField,
+                    GroupLayout.PREFERRED_SIZE,
+                    380,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.updateAuthHeadersButton,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
@@ -260,6 +360,12 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
             )
             .addComponent(
+                self._extender.toggleLanguageButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
                 self._extender.ignore304,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
@@ -285,11 +391,19 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
             )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
             .addComponent(
-                self._extender.aiOptionComboBox,
+                self._extender.aiModelTextField,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self._extender.modelSelectButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
             )
             .addComponent(
                 self._extender.interceptRequestsfromRepeater,
@@ -342,7 +456,8 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
-            ))
+            )
+            )
             .addComponent(
                 scrollReplaceString,
                 GroupLayout.PREFERRED_SIZE,
@@ -368,6 +483,31 @@ class ConfigurationTab():
                 GroupLayout.PREFERRED_SIZE,
                 GroupLayout.PREFERRED_SIZE,
             ))
+            .addComponent(
+                verticalSpacerPanel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self._extender.authHeadersLabel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                            .addComponent(
+                    self._extender.authHeadersField,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            .addComponent(
+                self._extender.updateAuthHeadersButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            ))
         )
 
         self.config_pnl.setMinimumSize(Dimension(0, 0))
@@ -383,21 +523,29 @@ class ConfigurationTab():
         self._extender._cfg_splitpane.setRightComponent(self._extender.filtersTabs)
 
     def startOrStop(self, event):
-        if self._extender.startButton.getText() == "AutorizePro is off":
-            self._extender.startButton.setText("AutorizePro is on")
-            self._extender.startButton.setSelected(True)
+        """
+        start/stop autorize
+        """
+        if self._extender.startButton.isSelected():
             self._extender.intercept = 1
+            self._extender.startButton.setText(get_text("autorize_is_on", "AutorizePro is on"))
+            self._extender.fetchCookiesHeaderButton.setEnabled(True)
+            self._extender.fetchAuthorizationHeaderButton.setEnabled(True)
         else:
-            self._extender.startButton.setText("AutorizePro is off")
-            self._extender.startButton.setSelected(False)
             self._extender.intercept = 0
+            self._extender.startButton.setText(get_text("autorize_is_off", "AutorizePro is off"))
+            self._extender.fetchCookiesHeaderButton.setEnabled(False)
+            self._extender.fetchAuthorizationHeaderButton.setEnabled(False)
 
     def clearList(self, event):
+        # 使用try-finally确保锁始终被释放
         self._extender._lock.acquire()
-        oldSize = self._extender._log.size()
-        self._extender._log.clear()
-        SwingUtilities.invokeLater(UpdateTableEDT(self._extender, "delete", 0, oldSize - 1))
-        self._extender._lock.release()
+        try:
+            oldSize = self._extender._log.size()
+            self._extender._log.clear()
+            SwingUtilities.invokeLater(UpdateTableEDT(self._extender, "delete", 0, oldSize - 1))
+        finally:
+            self._extender._lock.release()
 
     def replaceQueryHanlder(self, event):
         if self._extender.replaceQueryParam.isSelected():
@@ -439,6 +587,184 @@ class ConfigurationTab():
         if self._extender.lastAuthorizationHeader:
             self._extender.replaceString.setText(self._extender.lastAuthorizationHeader)
 
+    def toggleLanguage(self, event):
+        """实现语言切换功能，在中文和英文之间切换"""
+        from localization.ui_updater import update_main_ui, update_table_headers
+        
+        # 获取语言管理器
+        manager = get_language_manager()
+        
+        # 切换语言：如果当前是英文则切换到中文，如果是中文则切换到英文
+        current_language = manager.current_language
+        new_language = "zh" if current_language == "en" else "en"
+        
+        # 设置新语言
+        if manager.set_language(new_language):
+            # 更新按钮文本 - 特殊处理确保中文字符正确显示
+            toggle_text = get_text("language_toggle", "EN/中")
+            try:
+                from java.lang import String
+                toggle_text = String(toggle_text) if isinstance(toggle_text, unicode) else String(toggle_text.decode('utf-8'))
+            except:
+                pass
+            self._extender.toggleLanguageButton.setText(toggle_text)
+            
+            # 添加Jython环境检测
+            try:
+                # 尝试设置Java环境字符集为UTF-8
+                from java.lang import System
+                System.setProperty("file.encoding", "UTF-8")
+            except:
+                pass
+            
+            # 更新界面，使用try-except捕获可能的异常
+            try:
+                update_main_ui(self._extender)
+            except Exception as e:
+                print("警告: 语言切换后更新主界面失败: " + str(e))
+                
+            try:
+                update_table_headers(self._extender)
+            except Exception as e:
+                print("警告: 语言切换后更新表格头失败: " + str(e))
+            
+            # 显示语言已更改的提示
+            from javax.swing import JOptionPane
+            message = get_text("language_changed", "语言已成功更改")
+            title = get_text("extension_name", "AutorizePro")
+            
+            # 使用Java的String来确保Unicode字符正确显示
+            try:
+                from java.lang import String
+                if new_language == "zh":
+                    # 对中文消息进行特殊处理
+                    if not isinstance(message, unicode):
+                        message = message.decode('utf-8')
+                    message = String(message)
+                    title = String(title)
+            except:
+                pass
+                
+            JOptionPane.showMessageDialog(
+                None, 
+                message,
+                title, 
+                JOptionPane.INFORMATION_MESSAGE
+            )
+
+    def updateAuthHeaders(self, event):
+        """更新自定义认证头列表"""
+        auth_headers_text = self._extender.authHeadersField.getText()
+        if auth_headers_text:
+            # 分割并清理输入的认证头类型
+            auth_headers = [h.strip() for h in auth_headers_text.split(",") if h.strip()]
+            self._extender.custom_auth_headers = auth_headers
+            self._extender._callbacks.printOutput(get_text("auth_headers_updated", "Authentication headers updated successfully") + ": " + ", ".join(auth_headers))
+        else:
+            # 如果输入为空，恢复默认值
+            default_auth_headers = ["cookie", "authorization", "token"]
+            self._extender.custom_auth_headers = default_auth_headers
+            self._extender.authHeadersField.setText("cookie,authorization,token")
+            self._extender._callbacks.printOutput(get_text("auth_headers_reset", "Reset to default authentication headers"))
+        
+        # 显示成功提示
+        JOptionPane.showMessageDialog(
+            None,
+            get_text("auth_headers_updated", "Authentication headers updated successfully"),
+            "Update Headers",
+            JOptionPane.INFORMATION_MESSAGE
+        )
+        
+    def validateModelOnKeyToggle(self, event):
+        """在勾选 KEY 复选框时验证模型"""
+        if self._extender.apiKeyEnabledCheckbox.isSelected():
+            model_name = self._extender.aiModelTextField.getText().strip()
+            if not model_name:
+                # 获取当前语言的消息
+                message = get_text("model_empty", "Model name cannot be empty")
+                title = get_text("warning", "Warning")
+                
+                # 确保中文正确显示
+                try:
+                    from java.lang import String
+                    if isinstance(message, unicode):
+                        message = String(message)
+                    else:
+                        message = String(message.decode('utf-8'))
+                    if isinstance(title, unicode):
+                        title = String(title)
+                    else:
+                        title = String(title.decode('utf-8'))
+                except:
+                    pass
+                    
+                JOptionPane.showMessageDialog(
+                    None,
+                    message,
+                    title,
+                    JOptionPane.WARNING_MESSAGE
+                )
+                self._extender.apiKeyEnabledCheckbox.setSelected(False)
+                return
+                
+            if not self.validateModel(model_name):
+                # 获取当前语言的消息
+                message = get_text("unsupported_model", "Unsupported model vendor, please contact developer")
+                title = get_text("warning", "Warning")
+                
+                # 确保中文正确显示
+                try:
+                    from java.lang import String
+                    if isinstance(message, unicode):
+                        message = String(message)
+                    else:
+                        message = String(message.decode('utf-8'))
+                    if isinstance(title, unicode):
+                        title = String(title)
+                    else:
+                        title = String(title.decode('utf-8'))
+                except:
+                    pass
+                    
+                JOptionPane.showMessageDialog(
+                    None,
+                    message,
+                    title,
+                    JOptionPane.WARNING_MESSAGE
+                )
+                self._extender.apiKeyEnabledCheckbox.setSelected(False)
+                return
+
+    def validateModel(self, model_name):
+        # 首先检查是否在预设模型列表中
+        if model_name in self._predefinedOptions:
+            return True
+            
+        # 如果不在预设列表中，则检查是否包含支持的厂商前缀
+        for vendor in self._supportedVendors:
+            if model_name.lower().startswith(vendor):
+                return True
+                
+        return False
+        
+    def showModelOptions(self, event):
+        """显示模型选择菜单"""
+        # 清除旧菜单项
+        self._modelPopupMenu.removeAll()
+        
+        # 为每个预设模型创建菜单项
+        for option in self._predefinedOptions:
+            menuItem = JMenuItem(option, actionPerformed=lambda e, opt=option: self.selectModel(opt))
+            self._modelPopupMenu.add(menuItem)
+            
+        # 获取按钮位置并在其下方显示菜单
+        self._modelPopupMenu.show(self._extender.modelSelectButton, 0, self._extender.modelSelectButton.getHeight())
+    
+    def selectModel(self, model):
+        """选择模型并设置到文本框"""
+        # 直接设置预设模型，因为这些都是经过验证的
+        self._extender.aiModelTextField.setText(model)
+
 
 class SavedHeaderChange(ActionListener):
     def __init__(self, extender):
@@ -448,4 +774,42 @@ class SavedHeaderChange(ActionListener):
         selectedTitle = self._extender.savedHeadersTitlesCombo.getSelectedItem()
         headers = [x for x in self._extender.savedHeaders if x['title'] == selectedTitle]
         self._extender.replaceString.setText(headers[0]['headers'])
+
+
+class DocumentListener(DocumentListener):
+    def __init__(self, extender):
+        self._extender = extender
+        
+    def changedUpdate(self, e):
+        SwingUtilities.invokeLater(self.validateModel)
+        
+    def removeUpdate(self, e):
+        SwingUtilities.invokeLater(self.validateModel)
+        
+    def insertUpdate(self, e):
+        SwingUtilities.invokeLater(self.validateModel)
+        
+    def validateModel(self):
+        try:
+            model_name = self._extender.aiModelTextField.getText().strip()
+            if not model_name:
+                JOptionPane.showMessageDialog(
+                    None,
+                    get_text("model_empty", "模型名称不能为空"),
+                    get_text("warning", "警告"),
+                    JOptionPane.WARNING_MESSAGE
+                )
+                return
+                
+            if not self._extender.configurationTab.validateModel(model_name):
+                JOptionPane.showMessageDialog(
+                    None,
+                    get_text("unsupported_model", "暂不支持该厂商模型，请联系开发者"),
+                    get_text("warning", "警告"),
+                    JOptionPane.WARNING_MESSAGE
+                )
+                # 清空无效输入
+                self._extender.aiModelTextField.setText("")
+        except Exception as e:
+            print("模型验证出错: " + str(e))
 

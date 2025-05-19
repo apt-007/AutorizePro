@@ -40,13 +40,15 @@ from java.awt.event import KeyEvent
 from java.awt.event import InputEvent
 from javax.swing import SwingUtilities
 
+from localization.language_manager import get_text
+
 
 class ITabImpl(ITab):
     def __init__(self, extender):
         self._extender = extender
 
     def getTabCaption(self):
-        return "AutorizePro"
+        return get_text("extension_name", "AutorizePro")
 
     def getUiComponent(self):
         return self._extender._splitpane
@@ -64,14 +66,14 @@ class Tabs():
 
         tableWidth = self._extender.logTable.getPreferredSize().width
         self._extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
-        self._extender.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))
-        self._extender.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 25))
-        self._extender.logTable.getColumn("Orig. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Modif. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Authz. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("AI. Analyzer").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_method", "Method")).setPreferredWidth(Math.round(tableWidth / 50 * 3))
+        self._extender.logTable.getColumn(get_text("table_url", "URL")).setPreferredWidth(Math.round(tableWidth / 50 * 25))
+        self._extender.logTable.getColumn(get_text("table_originals_len", "Orig. Len")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_modified_len", "Modif. Len")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_unauthorized_len", "Unauth. Len")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_status", "Authz. Status")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_unauthorized_status", "Unauth. Status")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self._extender.logTable.getColumn(get_text("table_ai_analyzer", "AI. Analyzer")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
 
 
         self._extender.tableSorter = TableRowSorter(self._extender.tableModel)

@@ -92,11 +92,28 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             if authorizeOrNot:
                 removeHeaders = [header for header in removeHeadersStr.split() if header.endswith(':')]
             else:
-                removeHeaders = [header.strip() for header in removeHeadersStr.split() if header if header.lower().startswith(("cookie:", "authorization:", "token"))]
+                # 获取认证头类型列表，默认为 ("cookie:", "authorization:", "token")
+                auth_headers = getattr(self, "auth_header_types", ("cookie:", "authorization:", "token:"))
+                
+                # 如果界面上有自定义认证头，使用自定义认证头
+                if hasattr(self, "custom_auth_headers") and self.custom_auth_headers:
+                    auth_headers = tuple(h.lower() + ":" if not h.lower().endswith(":") else h.lower() 
+                                        for h in self.custom_auth_headers)
+                
+                removeHeaders = [header.strip() for header in removeHeadersStr.split() 
+                                if header if any(header.lower().startswith(h) for h in auth_headers)]
+            
+            headers_to_remove = []
             for header in headers[1:]:
                 for removeHeader in removeHeaders:
                     if header.lower().startswith(removeHeader.lower()):
-                        headers.remove(header)
+                        headers_to_remove.append(header)
+                        break
+            
+            # 单独移除找到的头部，避免在迭代过程中修改列表
+            for header in headers_to_remove:
+                if header in headers:
+                    headers.remove(header)
 
         if authorizeOrNot:
             for k, v in self.badProgrammerMRModel.items():
@@ -174,6 +191,11 @@ def getResponseBody(self, requestResponse):
     headers = analyzedResponse.getHeaders()
     charset = "UTF-8"
 
+    try:
+        url_info = self._helpers.analyzeRequest(requestResponse).getUrl().toString()
+    except:
+        url_info = "unknown"
+
     for header in headers:
         if header.lower().startswith("content-type:"):
             if "charset=" in header.lower():
@@ -192,7 +214,8 @@ def getResponseBody(self, requestResponse):
     try:
         return body_bytes.decode(charset)
     except (UnicodeDecodeError, LookupError) as e:
-        self._callbacks.printError("Error decoding response body with charset %s: %s" % (charset, str(e)))
+        self._callbacks.printOutput("[INFO] Charset: Error decoding response body from URL {} with charset {}: {}".format(
+            url_info, charset, str(e)))
         try:
             return body_bytes.decode("utf-8-sig")
         except (UnicodeDecodeError, LookupError):
@@ -201,7 +224,8 @@ def getResponseBody(self, requestResponse):
             except (UnicodeDecodeError, LookupError):
                 return body_bytes.decode("UTF-8", errors="replace")
     except Exception as e:
-        self._callbacks.printError("Unexpected error decoding response body: %s" % str(e))
+        self._callbacks.printOutput("[INFO] Decoding: Unexpected error decoding response body from URL {}: {}".format(
+            url_info, str(e)))
         return body_bytes.decode("UTF-8", errors="replace")
 
 

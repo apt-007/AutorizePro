@@ -11,6 +11,8 @@
 import sys
 sys.path.append("..")
 
+from localization.language_manager import get_text
+
 from java.io import File
 from java.awt import Font
 from javax.swing import JLabel
@@ -21,6 +23,8 @@ from javax.swing import JCheckBox
 from javax.swing import JComboBox
 from javax.swing import GroupLayout
 from javax.swing import JFileChooser
+from javax.swing import JSeparator, BorderFactory
+from java.awt import Color
 from java.awt.event import ItemListener
 
 from save_restore import SaveRestore
@@ -47,64 +51,101 @@ class Export():
         """ init Save/Restore
         """
 
-        exportLabel = JLabel("Export:")
-        exportLabel.setBounds(10, 10, 100, 30)
-        labelFont = exportLabel.getFont()
-        boldFont = Font(labelFont.getFontName(), Font.BOLD, labelFont.getSize())
-        exportLabel.setFont(boldFont)
+        # 导出结果区域 - 标题和边框
+        resultExportPanel = JPanel()
+        resultExportPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color(120, 120, 120)), 
+            get_text("export_results_section", "Export Test Results")))
+        # 保存面板引用以便更新边框
+        self._extender.resultExportPanel = resultExportPanel
 
-        exportLType = JLabel("File Type:")
+        exportLType = JLabel(get_text("export_file_type", "File Type:"))
         exportLType.setBounds(10, 50, 100, 30)
+        self._extender.exportLType = exportLType  # 存储对标签的引用
 
         exportFileTypes = ["HTML", "CSV"]
         self.exportType = JComboBox(exportFileTypes)
         self.exportType.setBounds(100, 50, 200, 30)
+        self._extender.exportType = self.exportType  # 存储对组件的引用
 
-        exportES = ["All Statuses", "As table filter",
-                    self._extender.BYPASSSED_STR,
-                    self._extender.IS_ENFORCED_STR,
-                    self._extender.ENFORCED_STR]
-        self.exportES = JComboBox(exportES)
+        # 使用国际化字符串
+        exportESItems = [
+            get_text("all_statuses", "All Statuses"),
+            get_text("as_table_filter", "As table filter"),
+            get_text("status_bypassed", self.BYPASSSED_STR),
+            get_text("status_is_enforced", self.IS_ENFORCED_STR),
+            get_text("status_enforced", self.ENFORCED_STR)
+        ]
+        self.exportES = JComboBox(exportESItems)
         self.exportES.setBounds(100, 90, 200, 30)
+        self._extender.exportES = self.exportES  # 存储对组件的引用
 
-        exportLES = JLabel("Statuses:")
+        exportLES = JLabel(get_text("export_statuses", "Statuses:"))
         exportLES.setBounds(10, 90, 100, 30)
+        self._extender.exportLES = exportLES  # 存储对标签的引用
 
-        self.removeDuplicates = JCheckBox("Remove Duplicates")
+        self.removeDuplicates = JCheckBox(get_text("remove_duplicates", "Remove Duplicates"))
         self.removeDuplicates.setBounds(8, 120, 300, 30)
         self.removeDuplicates.setSelected(True)
         self.removeDuplicates.addItemListener(RemoveDups(self._extender))
+        self._extender.removeDuplicates = self.removeDuplicates  # 存储对组件的引用
 
-        self.exportButton = JButton("Export",
+        self.exportButton = JButton(get_text("export_button", "Export"),
                                     actionPerformed=self.export)
         self.exportButton.setBounds(390, 50, 100, 30)
+        self._extender.exportButton = self.exportButton  # 存储对组件的引用
 
-        saveRestoreLabel = JLabel("State (incl. Configuration):")
-        saveRestoreLabel.setBounds(10, 160, 250, 30)
-        saveRestoreLabel.setFont(boldFont)
+        # 配置管理区域 - 标题和边框
+        configPanel = JPanel()
+        configPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color(120, 120, 120)), 
+            get_text("config_section", "Configuration Management")))
+        # 保存面板引用以便更新边框
+        self._extender.configPanel = configPanel
 
-        self.saveStateButton = JButton("Save",
+        self.saveStateButton = JButton(get_text("save_button", "Save Current Config"),
                                     actionPerformed=self.saveStateAction)
-        self.saveStateButton.setBounds(10, 200, 100, 30)
+        self.saveStateButton.setBounds(10, 200, 180, 30)
+        self._extender.saveStateButton = self.saveStateButton  # 存储对组件的引用
 
-        self.restoreStateButton = JButton("Restore",
+        self.restoreStateButton = JButton(get_text("restore_button", "Import Saved Config"),
                                         actionPerformed=self.restoreStateAction)
-        self.restoreStateButton.setBounds(390, 200, 100, 30)
+        self.restoreStateButton.setBounds(390, 200, 180, 30)
+        self._extender.restoreStateButton = self.restoreStateButton  # 存储对组件的引用
 
+        # 创建面板和布局
         self._extender.exportPnl = JPanel()
         layout = GroupLayout(self._extender.exportPnl)
         self._extender.exportPnl.setLayout(layout)
         layout.setAutoCreateGaps(True)
         layout.setAutoCreateContainerGaps(True)
 
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup()
-                .addComponent(
-                    exportLabel,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
+        # 设置水平布局
+        layout.setHorizontalGroup(layout.createParallelGroup()
+            # 导出结果区域
+            .addComponent(
+                resultExportPanel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            # 配置管理区域
+            .addComponent(
+                configPanel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+        )
+
+        # 导出结果区域内部布局
+        resultLayout = GroupLayout(resultExportPanel)
+        resultExportPanel.setLayout(resultLayout)
+        resultLayout.setAutoCreateGaps(True)
+        resultLayout.setAutoCreateContainerGaps(True)
+        
+        resultLayout.setHorizontalGroup(resultLayout.createSequentialGroup()
+            .addGroup(resultLayout.createParallelGroup()
                 .addComponent(
                     exportLType,
                     GroupLayout.PREFERRED_SIZE,
@@ -123,22 +164,35 @@ class Export():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
+            )
+            .addGroup(resultLayout.createParallelGroup()
                 .addComponent(
-                    saveRestoreLabel,
+                    self.exportType,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
                 .addComponent(
-                    self.saveStateButton,
+                    self.exportES,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
             )
-            .addGroup(layout.createParallelGroup()
+            .addGroup(resultLayout.createParallelGroup()
                 .addComponent(
-                    self.exportES,
+                    self.exportButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+        )
+
+        resultLayout.setVerticalGroup(resultLayout.createSequentialGroup()
+            .addGroup(resultLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    exportLType,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
@@ -149,16 +203,30 @@ class Export():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
-            )
-            .addGroup(layout.createParallelGroup()
                 .addComponent(
                     self.exportButton,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
+            )
+            .addGroup(resultLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(
-                    self.restoreStateButton,
+                    exportLES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.exportES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(resultLayout.createSequentialGroup()
+                .addComponent(
+                    self.removeDuplicates,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
@@ -166,82 +234,58 @@ class Export():
             )
         )
 
+        # 配置管理区域内部布局
+        configLayout = GroupLayout(configPanel)
+        configPanel.setLayout(configLayout)
+        configLayout.setAutoCreateGaps(True)
+        configLayout.setAutoCreateContainerGaps(True)
+        
+        configLayout.setHorizontalGroup(configLayout.createSequentialGroup()
+            .addComponent(
+                self.saveStateButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self.restoreStateButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+        )
+
+        configLayout.setVerticalGroup(configLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+            .addComponent(
+                self.saveStateButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self.restoreStateButton,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+        )
+
+        # 设置垂直布局
         layout.setVerticalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    exportLabel,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
+            .addComponent(
+                resultExportPanel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
             )
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    exportLType,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self.exportType,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self.exportButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    exportLES,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self.exportES,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(
-                    self.removeDuplicates,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(
-                    saveRestoreLabel,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    self.saveStateButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self.restoreStateButton,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
+            .addGap(20)  # 添加20像素的垂直间距
+            .addComponent(
+                configPanel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
             )
         )
-
-
 
     def export(self, event):
             if self.exportType.getSelectedItem() == "HTML":
@@ -379,3 +423,4 @@ class Export():
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)
         f.close()
+

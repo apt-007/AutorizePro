@@ -10,6 +10,7 @@
 
 from java.awt import GridLayout
 from burp import IInterceptedProxyMessage
+from localization.language_manager import get_text
 
 
 def addFilterHelper(typeObj, model, textObj):
@@ -37,23 +38,34 @@ def modFilterHelper(listObj, typeObj, textObj):
 
 
 def expand(extender, comp):
-    comp.setSelectedIndex(0)
-    comp.setTitleAt(2, "Collapse")
+    # 设置默认选中的Tab，这里确保总是先显示请求Tab
+    comp.setSelectedIndex(0)  
+    
+    # 使用翻译功能设置标签文本
+    comp.setTitleAt(2, get_text("collapse", "Collapse"))
 
+    # 移除所有Tab页面
     extender.requests_panel.remove(extender.modified_requests_tabs)
     extender.requests_panel.remove(extender.original_requests_tabs)
     extender.requests_panel.remove(extender.unauthenticated_requests_tabs)
 
+    # 只添加选中的Tab组
     extender.requests_panel.add(comp)
+    # 确保使用单个组件的布局
     extender.requests_panel.setLayout(GridLayout(1, 0))
-    extender.requests_panel.revalidate()  # 重新验证布局
+    # 强制重新绘制并验证布局
+    extender.requests_panel.revalidate()
+    extender.requests_panel.repaint()
 
+    # 标记为已展开状态
     extender.expanded_requests = 1
 
 
 def collapse(extender, comp):
     comp.setSelectedIndex(0)
-    comp.setTitleAt(2, "Expand")
+    
+    # 使用翻译功能设置标签文本
+    comp.setTitleAt(2, get_text("expand", "Expand"))
 
     extender.requests_panel.setLayout(GridLayout(3, 0))
 

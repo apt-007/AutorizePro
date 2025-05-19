@@ -20,6 +20,10 @@ from java.util import ArrayList
 
 from threading import Lock
 
+# 导入国际化支持
+from localization.language_manager import get_text
+from localization.ui_updater import update_main_ui, update_table_headers
+
 
 class Initiator():
     def __init__(self, extender):
@@ -31,9 +35,10 @@ class Initiator():
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
 
-        self._extender.BYPASSSED_STR = "Bypassed!"
-        self._extender.IS_ENFORCED_STR = "Is enforced??? (please configure enforcement detector)"
-        self._extender.ENFORCED_STR = "Enforced!"
+        # 使用本地化文本
+        self._extender.BYPASSSED_STR = get_text("status_bypassed", "Bypassed!")
+        self._extender.IS_ENFORCED_STR = get_text("status_is_enforced", "Is enforced??? (please configure enforcement detector)")
+        self._extender.ENFORCED_STR = get_text("status_enforced", "Enforced!")
 
         self._extender.intercept = 0
         self._extender.lastCookiesHeader = ""
@@ -61,11 +66,15 @@ class Initiator():
         table_filter = TableFilter(self._extender)
         table_filter.draw()
 
+        # 创建配置选项卡并保存config_pnl引用
         cfg_tab = ConfigurationTab(self._extender)
         cfg_tab.draw()
+        self._extender.config_pnl = cfg_tab.config_pnl
 
         tabs = Tabs(self._extender)
         tabs.draw()
+        
+        # 语言切换按钮已在ConfigurationTab中添加
 
     def implement_all(self):
         itab = ITabImpl(self._extender)
@@ -77,11 +86,26 @@ class Initiator():
         self._extender._callbacks.registerProxyListener(self._extender)
 
     def init_ui(self):
+        # 首先自定义UI组件
         self._extender._callbacks.customizeUiComponent(self._extender._splitpane)
         self._extender._callbacks.customizeUiComponent(self._extender.logTable)
         self._extender._callbacks.customizeUiComponent(self._extender.scrollPane)
         self._extender._callbacks.customizeUiComponent(self._extender.tabs)
         self._extender._callbacks.customizeUiComponent(self._extender.filtersTabs)
+        
+        # 在UI组件初始化完成后，再更新文本
+        # 有些组件可能还没有准备好，所以用try-except捕获可能的异常
+        try:
+            # 更新UI文本
+            update_main_ui(self._extender)
+        except Exception as e:
+            print("Warning: Failed to update main UI: " + str(e))
+            
+        try:
+            # 更新表格头
+            update_table_headers(self._extender)
+        except Exception as e:
+            print("Warning: Failed to update table headers: " + str(e))
 
     def print_welcome_message(self):
         print("""""")

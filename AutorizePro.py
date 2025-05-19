@@ -13,13 +13,17 @@ from authorization.authorization import handle_message
 from helpers.initiator import Initiator
 from helpers.filters import handle_proxy_message
 
+# 导入语言管理器
+from localization.language_manager import get_text
+
 
 class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     def registerExtenderCallbacks(self, callbacks):
         self._callbacks = callbacks
         self._helpers = callbacks.getHelpers()
 
-        callbacks.setExtensionName("AutorizePro")
+        # 使用本地化文本设置扩展名称
+        callbacks.setExtensionName(get_text("extension_name", "AutorizePro"))
 
         initiator = Initiator(self)
 

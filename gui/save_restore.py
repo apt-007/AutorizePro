@@ -16,6 +16,8 @@ from table import LogEntry, UpdateTableEDT
 from helpers.http import get_cookie_header_from_message, get_authorization_header_from_message, IHttpRequestResponseImplementation
 
 import csv, base64, json, re, sys
+from java.io import File
+from javax.swing.filechooser import FileNameExtensionFilter
 
 # This code is necessary to maximize the csv field limit for the save and
 # restore functionality
@@ -53,16 +55,41 @@ class SaveRestore():
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setDialogTitle("State output file")
+        # 设置默认文件后缀为.autorize
+        fileChooser.setSelectedFile(File("autorize_config.autorize"))
         userSelection = fileChooser.showSaveDialog(parentFrame)
 
         if userSelection == JFileChooser.APPROVE_OPTION:
             exportFile = fileChooser.getSelectedFile()
+            # 确保文件名以.autorize结尾
+            filePath = exportFile.getAbsolutePath()
+            if not filePath.lower().endswith(".autorize"):
+                filePath += ".autorize"
+                exportFile = File(filePath)
+                
             with open(exportFile.getAbsolutePath(), 'wb') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
                 # Configuration
                 tempRow = ["ReplaceString", base64.b64encode(self._extender.replaceString.getText())]
                 csvwriter.writerow(tempRow)
+                
+                # 保存API密钥
+                if hasattr(self._extender, "apiKeyField"):
+                    tempRow = ["ApiKey", base64.b64encode(self._extender.apiKeyField.getText())]
+                    csvwriter.writerow(tempRow)
+                
+                # 保存模型选择
+                if hasattr(self._extender, "aiModelTextField"):
+                    try:
+                        # 直接从文本框获取模型名称
+                        modelName = self._extender.aiModelTextField.getText()
+                        # 确保模型名称是字符串
+                        if modelName is not None and modelName != "":
+                            tempRow = ["AiModel", str(modelName)]
+                            csvwriter.writerow(tempRow)
+                    except:
+                        print("Warning: Could not save AI model setting")
 
                 for EDFilter in self._extender.EDModel.toArray():
                     tempRow = ["EDFilter", base64.b64encode(EDFilter)]
@@ -135,6 +162,13 @@ class SaveRestore():
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setDialogTitle("State import file")
+        
+        # 添加文件过滤器，只显示.autorize文件
+        # 使用英文描述避免乱码问题
+        fileFilter = FileNameExtensionFilter("AutorizePro Config Files (*.autorize)", ["autorize"])
+        fileChooser.addChoosableFileFilter(fileFilter)
+        fileChooser.setFileFilter(fileFilter)
+        
         userSelection = fileChooser.showDialog(parentFrame, "Restore")
         modelMap = {
             "IFFilter": self._extender.IFModel,
@@ -153,6 +187,20 @@ class SaveRestore():
                     # Configuration
                     if row[0] == "ReplaceString":
                         self._extender.replaceString.setText(base64.b64decode(row[1]))
+                        continue
+                    
+                    # 恢复API密钥
+                    if row[0] == "ApiKey" and hasattr(self._extender, "apiKeyField"):
+                        self._extender.apiKeyField.setText(base64.b64decode(row[1]))
+                        continue
+                    
+                    # 恢复模型选择
+                    if row[0] == "AiModel" and hasattr(self._extender, "aiModelTextField"):
+                        try:
+                            # 直接设置到文本框
+                            self._extender.aiModelTextField.setText(row[1])
+                        except Exception as e:
+                            print("Warning: Could not set AI model to " + row[1] + ": " + str(e))
                         continue
 
                     if row[0] in modelMap:
@@ -230,32 +278,34 @@ class SaveRestore():
                     tempEnforcementStatus = row[15]
                     tempEnforcementStatusUnauthorized = row[16]
 
+                    # 使用try-finally确保锁始终被释放
                     self._extender._lock.acquire()
+                    try:
+                        row = self._extender._log.size()
 
-                    row = self._extender._log.size()
+                        if checkAuthentication:
+                            self._extender._log.add(
+                                LogEntry(self._extender.currentRequestNumber,
+                                self._extender._callbacks.saveBuffersToTempFiles(tempRequestResponse),
+                                 self._extender._helpers.analyzeRequest(tempRequestResponse).getMethod(),
+                                  self._extender._helpers.analyzeRequest(tempRequestResponse).getUrl(),
+                                   self._extender._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),
+                                   tempEnforcementStatus,
+                                   self._extender._callbacks.saveBuffersToTempFiles(tempUnauthorizedRequestResponse),
+                                   tempEnforcementStatusUnauthorized))
+                        else:
+                            self._extender._log.add(
+                                LogEntry(self._extender.currentRequestNumber,
+                                self._extender._callbacks.saveBuffersToTempFiles(tempRequestResponse),
+                                self._extender._helpers.analyzeRequest(tempRequestResponse).getMethod(),
+                                 self._extender._helpers.analyzeRequest(tempRequestResponse).getUrl(),
+                                  self._extender._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),
+                                  tempEnforcementStatus,None,tempEnforcementStatusUnauthorized))
 
-                    if checkAuthentication:
-                        self._extender._log.add(
-                            LogEntry(self._extender.currentRequestNumber,
-                            self._extender._callbacks.saveBuffersToTempFiles(tempRequestResponse),
-                             self._extender._helpers.analyzeRequest(tempRequestResponse).getMethod(),
-                              self._extender._helpers.analyzeRequest(tempRequestResponse).getUrl(),
-                               self._extender._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),
-                               tempEnforcementStatus,
-                               self._extender._callbacks.saveBuffersToTempFiles(tempUnauthorizedRequestResponse),
-                               tempEnforcementStatusUnauthorized))
-                    else:
-                        self._extender._log.add(
-                            LogEntry(self._extender.currentRequestNumber,
-                            self._extender._callbacks.saveBuffersToTempFiles(tempRequestResponse),
-                            self._extender._helpers.analyzeRequest(tempRequestResponse).getMethod(),
-                             self._extender._helpers.analyzeRequest(tempRequestResponse).getUrl(),
-                              self._extender._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),
-                              tempEnforcementStatus,None,tempEnforcementStatusUnauthorized))
-
-                    SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"insert",row,row))
-                    self._extender.currentRequestNumber = self._extender.currentRequestNumber + 1
-                    self._extender._lock.release()
+                        SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"insert",row,row))
+                        self._extender.currentRequestNumber = self._extender.currentRequestNumber + 1
+                    finally:
+                        self._extender._lock.release()
 
                 lastRow = self._extender._log.size()
                 if lastRow > 0:

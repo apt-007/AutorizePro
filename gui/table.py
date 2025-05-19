@@ -25,6 +25,7 @@ from javax.swing.table import AbstractTableModel
 from javax.swing.event import ListSelectionListener
 
 from helpers.filters import expand, collapse
+from localization.language_manager import get_text
 
 
 class TableFilter():
@@ -36,14 +37,17 @@ class TableFilter():
         init show tab
         """
 
-        filterLModified = JLabel("Modified:")
+        filterLModified = JLabel(get_text("filter_modified", "Modified:"))
         filterLModified.setBounds(10, 10, 100, 30)
+        self._extender.filterLModified = filterLModified
 
-        filterLUnauthenticated = JLabel("Unauthenticated:")
+        filterLUnauthenticated = JLabel(get_text("filter_unauthenticated", "Unauthenticated:"))
         filterLUnauthenticated.setBounds(250, 10, 100, 30)
+        self._extender.filterLUnauthenticated = filterLUnauthenticated
 
-        filterLAIAnalyzed = JLabel("AI.Analyzed:")
+        filterLAIAnalyzed = JLabel(get_text("filter_ai_analyzed", "AI.Analyzed:"))
         filterLAIAnalyzed.setBounds(490, 10, 100, 30)
+        self._extender.filterLAIAnalyzed = filterLAIAnalyzed
 
         # Existing Modified filters
         self._extender.showAuthBypassModified = JCheckBox(self._extender.BYPASSSED_STR)
@@ -51,7 +55,7 @@ class TableFilter():
         self._extender.showAuthBypassModified.setSelected(True)
         self._extender.showAuthBypassModified.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showAuthPotentiallyEnforcedModified = JCheckBox("Is enforced???")
+        self._extender.showAuthPotentiallyEnforcedModified = JCheckBox(self._extender.IS_ENFORCED_STR)
         self._extender.showAuthPotentiallyEnforcedModified.setBounds(10, 60, 200, 30)
         self._extender.showAuthPotentiallyEnforcedModified.setSelected(True)
         self._extender.showAuthPotentiallyEnforcedModified.addItemListener(TabTableFilter(self._extender))
@@ -66,7 +70,7 @@ class TableFilter():
         self._extender.showAuthBypassUnauthenticated.setSelected(True)
         self._extender.showAuthBypassUnauthenticated.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Is enforced???")
+        self._extender.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox(self._extender.IS_ENFORCED_STR)
         self._extender.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 60, 200, 30)
         self._extender.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
         self._extender.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(TabTableFilter(self._extender))
@@ -76,7 +80,7 @@ class TableFilter():
         self._extender.showAuthEnforcedUnauthenticated.setSelected(True)
         self._extender.showAuthEnforcedUnauthenticated.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showDisabledUnauthenticated = JCheckBox("Disabled")
+        self._extender.showDisabledUnauthenticated = JCheckBox(get_text("filter_disabled", "Disabled"))
         self._extender.showDisabledUnauthenticated.setBounds(250, 110, 200, 30)
         self._extender.showDisabledUnauthenticated.setSelected(True)
         self._extender.showDisabledUnauthenticated.addItemListener(TabTableFilter(self._extender))
@@ -86,7 +90,7 @@ class TableFilter():
         self._extender.showAuthBypassAIAnalyzed.setSelected(True)
         self._extender.showAuthBypassAIAnalyzed.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showAuthPotentiallyEnforcedAIAnalyzed = JCheckBox("Is enforced???")
+        self._extender.showAuthPotentiallyEnforcedAIAnalyzed = JCheckBox(self._extender.IS_ENFORCED_STR)
         self._extender.showAuthPotentiallyEnforcedAIAnalyzed.setBounds(490, 60, 200, 30)
         self._extender.showAuthPotentiallyEnforcedAIAnalyzed.setSelected(True)
         self._extender.showAuthPotentiallyEnforcedAIAnalyzed.addItemListener(TabTableFilter(self._extender))
@@ -309,8 +313,17 @@ class TableModel(AbstractTableModel):
         return 9
 
     def getColumnName(self, columnIndex):
-        data = ['ID', 'Method', 'URL', 'Orig. Len', 'Modif. Len', "Unauth. Len",
-                "Authz. Status", "Unauth. Status", "AI. Analyzer"]
+        data = [
+            'ID', 
+            get_text("table_method", "Method"), 
+            get_text("table_url", "URL"), 
+            get_text("table_originals_len", "Orig. Len"), 
+            get_text("table_modified_len", "Modif. Len"), 
+            get_text("table_unauthorized_len", "Unauth. Len"), 
+            get_text("table_status", "Authz. Status"), 
+            get_text("table_unauthorized_status", "Unauth. Status"),
+            get_text("table_ai_analyzer", "AI. Analyzer")
+        ]
         try:
             return data[columnIndex]
         except IndexError:
@@ -381,6 +394,9 @@ class Table(JTable):
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
         value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
+        # 列索引 6 是 "Authz. Status"
+        # 列索引 7 是 "Unauth. Status"
+        # 列索引 8 是 "AI. Analyzer"
         if col == 6 or col == 7 or col == 8:
             if value == self._extender.BYPASSSED_STR:
                 comp.setBackground(Color(255, 153, 153))
@@ -421,19 +437,28 @@ class Table(JTable):
 
         self._extender._currentlyDisplayedItem = logEntry
 
-        if col == 3:
+        # 使用固定的列索引而不是根据列名判断
+        if col == 3:  # Orig. Len
             collapse(self._extender, self._extender.modified_requests_tabs)
             collapse(self._extender, self._extender.unauthenticated_requests_tabs)
             expand(self._extender, self._extender.original_requests_tabs)
-        elif col == 4 or col == 6:
+        elif col == 4:  # Modif. Len
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.unauthenticated_requests_tabs)
+            # 展开并显示Modified Response选项卡
+            self._extender.modified_requests_tabs.setSelectedIndex(1)  # 选择响应选项卡
             expand(self._extender, self._extender.modified_requests_tabs)
-        elif col == 5 or col == 7:
+        elif col == 6:  # Authz. Status
+            collapse(self._extender, self._extender.original_requests_tabs)
+            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
+            # 展开并显示Modified Request选项卡
+            self._extender.modified_requests_tabs.setSelectedIndex(0)  # 选择请求选项卡
+            expand(self._extender, self._extender.modified_requests_tabs)
+        elif col == 5 or col == 7:  # Unauth. Len or Unauth. Status
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.modified_requests_tabs)
             expand(self._extender, self._extender.unauthenticated_requests_tabs)
-        elif col == 5 or col == 8:
+        elif col == 8:  # AI. Analyzer
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.unauthenticated_requests_tabs)
             expand(self._extender, self._extender.modified_requests_tabs)
@@ -475,34 +500,32 @@ class TableRowFilter(RowFilter):
         self._extender = extender
 
     def include(self, entry):
+        # 列索引 6 是 "Authz. Status"
+        # 列索引 7 是 "Unauth. Status"
+        # 列索引 8 是 "AI. Analyzer"
+        
         if self._extender.showAuthBypassModified.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(6):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
-                6):
+        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(6):
             return True
         elif self._extender.showAuthEnforcedModified.isSelected() and self._extender.ENFORCED_STR == entry.getValue(6):
             return True
-        elif self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(
-                7):
+        elif self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(7):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
-                7):
+        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(7):
             return True
-        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == entry.getValue(
-                7):
+        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == entry.getValue(7):
             return True
         elif self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == entry.getValue(7):
             return True
         elif self._extender.showAuthBypassAIAnalyzed.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(8):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedAIAnalyzed.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(
-                8):
+        elif self._extender.showAuthPotentiallyEnforcedAIAnalyzed.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(8):
             return True
-        elif self._extender.showAuthEnforcedAIAnalyzed.isSelected() and self._extender.ENFORCED_STR == entry.getValue(
-                8):
+        elif self._extender.showAuthEnforcedAIAnalyzed.isSelected() and self._extender.ENFORCED_STR == entry.getValue(8):
             return True
-        else:
-            return False
+        
+        return False
 
 
 class UpdateTableEDT(Runnable):

@@ -1,12 +1,6 @@
-#!/usr/bin/env python3
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-"""
-@File   : authorization.py
-@Author : sule01u
-@Date   : 2024/10/10
-@Desc   : 
-"""
 import sys
 import re
 import datetime
@@ -17,6 +11,7 @@ from java.lang import StringBuilder
 from javax.swing import SwingUtilities
 from javax.net.ssl import SSLHandshakeException, SSLSocketFactory
 from java.net import SocketException
+from javax.swing.event import DocumentListener
 
 reload(sys)
 
@@ -38,6 +33,21 @@ from helpers.http import (
 
 from gui.table import LogEntry, UpdateTableEDT
 
+CODE_BLOCK_PATTERN = re.compile(r'```(?:json)?(.*?)```', re.DOTALL)
+RES_FIELD_PATTERN = re.compile(r'[\'\"]res[\'\"]:\s*[\'\"](\w+)[\'\"]', re.IGNORECASE)
+JSON_RES_PATTERN = re.compile(r'"res":\s*"(\w+)"')
+ESCAPED_JSON_RES_PATTERN = re.compile(r'\\"res\\":\s*\\"(\w+)\\"')
+NESTED_RES_PATTERN = re.compile(r'"content":\s*".*?[\'\"]res[\'\"]:\s*[\'\"](\w+)[\'\"].*?"', re.DOTALL)
+MARKDOWN_JSON_PATTERN = re.compile(r'"content":\s*"{\\?"res\\?":\s*\\?"(\w+)\\?"')
+CHOICES_CONTENT_PATTERN = re.compile(r'"choices":\s*\[\s*{.*?"message":\s*{.*?"content":\s*".*?res.*?(\w+).*?"', re.DOTALL)
+HUNYUAN_PATTERN = re.compile(r'"content"\s*:\s*"```json\\\\n{\\\\"res\\\\":\\\\"(\w+)\\\\"')
+QIANWEN_PATTERN = re.compile(r'content.*?```.*?res.*?[\'"](\w+)[\'"].*?```', re.DOTALL)
+GLM_PATTERN = re.compile(r'content.*?res.*?[\'"](\w+)[\'"]', re.DOTALL)
+LOOSE_PATTERN = re.compile(r'res.*?[\'"](\w+)[\'"]', re.IGNORECASE | re.DOTALL)
+HUNYUAN_CONTENT_PATTERN = re.compile(r'"choices":\s*\[\s*{\s*"index":\s*\d+,\s*"message":\s*{\s*"role":\s*"assistant",\s*"content":\s*"(.*?)"', re.DOTALL)
+
+ai_analysis_cache = {}
+MAX_CACHE_SIZE = 100
 
 def tool_needs_to_be_ignored(self, toolFlag):
     for i in range(0, self.IFList.getModel().getSize()):
@@ -316,19 +326,43 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
     return auth_enforced
 
 
-def pre_check(self, oldStatusCode, newStatusCode, oldContent, newContent, modifyFlag):
-    allowed_status_codes = {"200", "302", "301", "303", "307", "308"}
-    statusCode = newStatusCode.split(" ")[1]
-    if statusCode not in allowed_status_codes:
-        # print(oriUrl, " ---> Status code not allowed: " + statusCode)
+def pre_check(self, oldStatusCode, newStatusCode, oldContent, newContent, modifyFlag, oriUrl="Unknown URL"):
+    try:
+        if not oldStatusCode or not newStatusCode:
+            self._callbacks.printOutput("[INFO] Status check: Missing or invalid status codes for URL: {}".format(oriUrl))
+            return False
+            
+        allowed_status_codes = {"200", "302", "301", "303", "307", "308"}
+        try:
+            statusCode = newStatusCode.split(" ")[1]
+        except (IndexError, AttributeError):
+            self._callbacks.printOutput("[INFO] Status format: Unexpected status code format ({}) for URL: {}".format(str(newStatusCode), oriUrl))
+            return False
+            
+        if statusCode not in allowed_status_codes:
+            self._callbacks.printOutput("[INFO] Status filter: Code {} not in allowed list for URL: {}".format(statusCode, oriUrl))
+            return False
+            
+        if not modifyFlag:
+            self._callbacks.printOutput("[INFO] Request check: No modifications detected for URL: {}".format(oriUrl))
+            return False
+            
+        content_type_check = False
+        try:
+            if detect_response_type(self, oldContent) and detect_response_type(self, newContent):
+                content_type_check = True
+        except Exception as e:
+            self._callbacks.printOutput("[INFO] Content check: Unable to determine content type for URL: {} - {}".format(oriUrl, str(e)))
+            return False
+            
+        if not content_type_check:
+            self._callbacks.printOutput("[INFO] Content filter: Not an json/xml response for URL: {}".format(oriUrl))
+            return False
+            
+        return True
+    except Exception as e:
+        self._callbacks.printOutput("[INFO] Process: Unable to complete pre-checks for URL: {} - {}".format(oriUrl, str(e)))
         return False
-    if not modifyFlag:
-        # print(oriUrl, " ---> Request not modified")
-        return False
-    if not detect_response_type(self, oldContent) or not detect_response_type(self, newContent):
-        # print(oriUrl, " ---> Response content not API type")
-        return False
-    return True
 
 
 def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent, filters, requestResponse,
@@ -336,18 +370,35 @@ def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent,
     AI_res = ""
     if isAuthorized and self.apiKeyEnabledCheckbox.isSelected():
         if newStatusCode == oldStatusCode and 50 < len(oldContent) < 7000:
-            apiKey = self.apiKeyField.getText()
-            modelName = self.aiOptionComboBox.getSelectedItem()
-            if apiKey:
-                api_result_mapping = {
-                    "true": self.BYPASSSED_STR,
-                    "false": self.ENFORCED_STR,
-                    "unknown": self.IS_ENFORCED_STR
-                }
-                AI_res = call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, oldContent, newContent)
-                AI_res = api_result_mapping.get(AI_res, AI_res)
+            cache_key = hash((oldStatusCode, newStatusCode, len(oldContent), len(newContent), 
+                            oldContent[:50], newContent[:50], oldContent[-50:], newContent[-50:]))
+            
+            if cache_key in ai_analysis_cache:
+                self._callbacks.printOutput("Using cached AI analysis result")
+                AI_res = ai_analysis_cache[cache_key]
             else:
-                self._callbacks.printError("API-Key is None")
+                apiKey = self.apiKeyField.getText()
+                try:
+                    modelName = self.aiModelTextField.getText()
+                except:
+                    modelName = None
+                    
+                if apiKey and modelName:
+                    api_result_mapping = {
+                        "true": self.BYPASSSED_STR,
+                        "false": self.ENFORCED_STR,
+                        "unknown": self.IS_ENFORCED_STR
+                    }
+                    AI_res = call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, oldContent, newContent)
+                    AI_res = api_result_mapping.get(AI_res, AI_res)
+                    
+                    ai_analysis_cache[cache_key] = AI_res
+                    
+                    if len(ai_analysis_cache) > MAX_CACHE_SIZE:
+                        oldest_key = next(iter(ai_analysis_cache))
+                        ai_analysis_cache.pop(oldest_key)
+                else:
+                    self._callbacks.printOutput("[INFO] API: API key is not configured")
 
     auth_enforced = False
     if filters:
@@ -363,14 +414,47 @@ def checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent,
 
 def detect_response_type(self, content):
     try:
-        content = content.strip()
-        if content.startswith("{") and content.endswith("}"):
+        if content is None or len(content) == 0:
+            return False
+
+        # 存储当前处理的URL（如果可用）
+        current_url = getattr(self, "current_url", "unknown")
+        
+        # 尝试规范化内容为字符串
+        try:
+            if isinstance(content, (str, unicode)):
+                content = content.strip()
+            else:
+                content = str(content).strip()
+        except (AttributeError, TypeError, UnicodeDecodeError) as e:
+            self._callbacks.printOutput("[INFO] Content type: Cannot normalize content from URL {}: {}".format(
+                current_url, str(e)))
+            return False
+            
+        # 检查是否为二进制数据
+        if isinstance(content, (bytes, bytearray)) or not isinstance(content, (str, unicode)):
+            self._callbacks.printOutput("[INFO] Content type: Binary data detected from URL {}, cannot process as JSON/XML".format(
+                current_url))
+            return False
+            
+        # 检查内容类型
+        if not content:
+            return False
+        elif content.startswith("{") and content.endswith("}"):
             return True
-        elif content.startswith("<?xml"):
+        elif content.startswith("[") and content.endswith("]"):
             return True
+        elif content.startswith("<?xml") or (content.startswith("<") and "<xml" in content[:100]):
+            return True
+        elif "<html" in content.lower()[:1000] or "<body" in content.lower()[:1000]:
+            self._callbacks.printOutput("[INFO] Content type: HTML content detected from URL {}, not processing as JSON/XML".format(
+                current_url))
+            return False
         else:
             return False
-    except Exception:
+    except Exception as e:
+        self._callbacks.printOutput("[INFO] Content filter: Error in detect_response_type from URL {}: {}".format(
+            getattr(self, "current_url", "unknown"), str(e)))
         return False
 
 
@@ -380,37 +464,129 @@ def escape_special_characters(self, input_string):
 
 
 def read_response(self, stream):
-    reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
-    response = StringBuilder()
-    line = reader.readLine()
-    while line is not None:
-        response.append(line)
-        line = reader.readLine()
-    reader.close()
-    return response.toString()
+    reader = None
+    try:
+        try:
+            reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
+            response = StringBuilder()
+            
+            line = reader.readLine()
+            while line is not None:
+                response.append(line)
+                response.append("\n")
+                line = reader.readLine()
+            
+            return response.toString()
+        except Exception as e:
+            self._callbacks.printOutput("[INFO] Encoding: Failed to decode response with UTF-8 for URL {}: {}".format(
+                getattr(self, "current_url", "unknown"), str(e)))
+            
+            # 尝试使用其他编码
+            for encoding in ["UTF-8-SIG", "ISO-8859-1", "GBK", "GB2312", "GB18030"]:
+                try:
+                    if reader is not None:
+                        reader.close()
+                    reader = BufferedReader(InputStreamReader(stream, encoding))
+                    response = StringBuilder()
+                    
+                    line = reader.readLine()
+                    while line is not None:
+                        response.append(line)
+                        response.append("\n")
+                        line = reader.readLine()
+                    
+                    self._callbacks.printOutput("[INFO] Encoding: Successfully decoded with {} encoding".format(encoding))
+                    return response.toString()
+                except Exception as e2:
+                    self._callbacks.printOutput("[INFO] Encoding: Failed with {} encoding: {}".format(encoding, str(e2)))
+                    continue
+            
+            # 所有文本编码都失败，处理为二进制数据
+            try:
+                if reader is not None:
+                    reader.close()
+                
+                from java.io import ByteArrayOutputStream
+                buffer = ByteArrayOutputStream()
+                from jarray import zeros
+                from java.lang import Byte
+                byte_array = zeros(4096, Byte)
+                
+                bytes_read = stream.read(byte_array, 0, 4096)
+                while bytes_read != -1:
+                    buffer.write(byte_array, 0, bytes_read)
+                    bytes_read = stream.read(byte_array, 0, 4096)
+                
+                size = buffer.size()
+                self._callbacks.printOutput("[INFO] Binary: Received binary data from URL {}, length: {} bytes, skipping processing".format(
+                    getattr(self, "current_url", "unknown"), str(size)))
+                return ""
+            except Exception as e2:
+                self._callbacks.printOutput("[INFO] Binary: Error while processing binary data: {}".format(str(e2)))
+                return ""
+    except Exception as e:
+        self._callbacks.printOutput("[INFO] Stream: Error reading response: {}".format(str(e)))
+        return ""
+    finally:
+        if reader is not None:
+            try:
+                reader.close()
+            except Exception as e:
+                self._callbacks.printOutput("[INFO] Cleanup: Error closing reader: {}".format(str(e)))
 
 
 def extract_res_value(self, response_string):
     try:
-        # 尝试匹配转义的引号格式（通义千问）
-        match = re.search(r'.*res\\":\\"(true|false|unknown)', response_string, re.DOTALL)
-        if match:
-            return match.group(1)
+        if not response_string or response_string.strip() == "":
+            self._callbacks.printOutput("[INFO] Response: Content is empty, cannot extract 'res' value")
+            return ""
             
-        # 尝试匹配未转义的引号格式（混元）
-        match = re.search(r'.*res":\s*"(true|false|unknown)"', response_string, re.DOTALL)
-        if match:
-            return match.group(1)
+        code_block_match = CODE_BLOCK_PATTERN.search(response_string)
+        if code_block_match:
+            content_to_process = code_block_match.group(1).strip()
+            res_in_block = RES_FIELD_PATTERN.search(content_to_process)
+            if res_in_block:
+                return res_in_block.group(1).lower()
+        else:
+            content_to_process = response_string
+        
+        patterns = [
+            JSON_RES_PATTERN,
+            JSON_RES_PATTERN,
+            ESCAPED_JSON_RES_PATTERN,
+            NESTED_RES_PATTERN,
+            MARKDOWN_JSON_PATTERN,
+            CHOICES_CONTENT_PATTERN,
+            HUNYUAN_PATTERN,
+            QIANWEN_PATTERN,
+            GLM_PATTERN
+        ]
+        
+        for pattern in patterns:
+            match = pattern.search(content_to_process)
+            if match:
+                return match.group(1).lower()
+        
+        hunyuan_match = HUNYUAN_CONTENT_PATTERN.search(content_to_process)
+        if hunyuan_match:
+            content = hunyuan_match.group(1)
+            content = content.replace('\\n', '\n').replace('\\\"', '\"').replace('\\\\', '\\')
+            res_in_content = RES_FIELD_PATTERN.search(content)
+            if res_in_content:
+                return res_in_content.group(1).lower()
             
-        # 尝试匹配 content 字段中的 JSON 字符串
-        match = re.search(r'"content":\s*"{\\?"res\\?":\s*\\?"(true|false|unknown)\\?"', response_string, re.DOTALL)
-        if match:
-            return match.group(1)
+        loose_match = LOOSE_PATTERN.search(content_to_process)
+        if loose_match:
+            return loose_match.group(1).lower()
             
-        print("No 'res' field found in AI api response.")
+        self._callbacks.printOutput("[INFO] Response: No 'res' field found in AI API response")
+        if len(response_string) > 100:
+            self._callbacks.printOutput("[INFO] Response: Content (truncated): " + response_string[:100] + "...")
+        else:
+            self._callbacks.printOutput("[INFO] Response: Content: " + response_string)
         return ""
     except Exception as e:
-        self._callbacks.printError("An error occurred while extracting 'res' field: " + str(e))
+        self._callbacks.printOutput("[INFO] Response: Error extracting 'res' field: {}".format(str(e)))
         return ""
 
 
@@ -433,6 +609,10 @@ def generate_prompt(self, modelName, system_prompt, user_prompt):
 
 
 def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
+    if apiKey is None:
+        self._callbacks.printOutput("[INFO] API: API key is not configured")
+        return "unknown"
+
     if self.replaceQueryParam.isSelected():
         res_system_prompt = """**角色描述**：**角色描述**：你是一个判断是否存在越权的分析机器人，通过对比两个 HTTP 请求响应数据包的相似性，判断是否存在越权漏洞，并根据要求给出判断结果。
             **输入介绍**：用户提供了两个响应内容：
@@ -527,10 +707,33 @@ def call_dashscope_api(self, apiKey, modelName, oriUrl, oriBody, res1, res2):
 def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
     max_retries = 3
     retry_count = 0
-    retry_delay = 2  # 初始重试延迟（秒）
+    retry_delay = 2  # 基础延迟（秒）
+    jitter_factor = 0.25  # 抖动因子（最大抖动为基础延迟的25%）
+    
+    # 保存当前URL以供日志记录使用
+    self.current_url = orgUrl
     
     while retry_count < max_retries:
+        connection = None
+        outputStream = None
+        writer = None
+        inputStream = None
+        errorStream = None
+        
         try:
+            if retry_count > 0:
+                from java.util import Random
+                rand = Random()
+                # 计算基本延迟（指数退避）
+                base_delay = retry_delay * (2 ** (retry_count - 1))
+                # 添加随机抖动（±抖动因子的基本延迟）
+                jitter = rand.nextFloat() * base_delay * jitter_factor * 2 - base_delay * jitter_factor
+                actual_delay = base_delay + jitter
+                
+                self._callbacks.printOutput("[INFO] Retry: Waiting {:.2f} seconds before retrying request {} (attempt {}/{})".format(
+                              actual_delay, str(orgUrl), retry_count + 1, max_retries))
+                time.sleep(actual_delay)
+                
             url = URL("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")
             api_url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
             if modelName.startswith("deepseek"):
@@ -563,8 +766,6 @@ def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
             writer = OutputStreamWriter(outputStream, "UTF-8")
             writer.write(request_body)
             writer.flush()
-            writer.close()
-            outputStream.close()
 
             responseCode = connection.getResponseCode()
 
@@ -577,7 +778,7 @@ def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
                            '\t"timestamp": "%s",\n ' \
                            '\t"orig_url": "%s",\n ' \
                            '\t"ai_api_status": "%s",\n ' \
-                           '\t"ai_analysis_result": "%s"\n ' \
+                           '\t"ai_analysis_result": "%s",\n ' \
                            '\t"ai_original_response": "%s"\n ' \
                            '}\n' % (
                                timestamp,
@@ -596,57 +797,116 @@ def request_dashscope_api(self, api_key, modelName, orgUrl, request_body):
                 errorStream = connection.getErrorStream()
                 if errorStream is not None:
                     error_response = read_response(self, errorStream)
-                    print("Error Response :: Target URL: %s, API: %s, Response: %s" % (str(orgUrl), api_url, error_response))
+                    self._callbacks.printOutput("[INFO] API response: Target URL: {}, AI service: {}, Response: {}".format(
+                        str(orgUrl), api_url, error_response))
                     
-                    # 检查是否是频率限制错误
-                    if '稍后重试' in error_response or "稍后重试" in error_response:
+                    # 更全面的速率限制检测
+                    rate_limit_indicators = [
+                        'rate limit', 'ratelimit', 'too many requests', 
+                        'too_many_requests', '429', 'throttl', 
+                        'frequency', '频率', '次数超限', '请求过于频繁', 
+                        '稍后重试', '请求频率', '频率超限', 'qps'
+                    ]
+                    
+                    is_rate_limited = (responseCode == 429) or any(
+                        indicator in error_response.lower() for indicator in rate_limit_indicators
+                    )
+                    
+                    if is_rate_limited:
                         retry_count += 1
                         if retry_count < max_retries:
-                            wait_time = retry_delay * (2 ** (retry_count - 1))  # 指数退避
-                            self._callbacks.printError(
-                                "Rate limit hit for target URL %s, waiting %d seconds before retry (attempt %d/%d)" % 
-                                (str(orgUrl), wait_time, retry_count + 1, max_retries))
+                            # 指数退避 + 抖动
+                            base_delay = retry_delay * (2 ** (retry_count - 1))
+                            from java.util import Random
+                            rand = Random()
+                            jitter = rand.nextFloat() * base_delay * jitter_factor * 2 - base_delay * jitter_factor
+                            wait_time = base_delay + jitter
+                            
+                            self._callbacks.printOutput(
+                                "[INFO] Rate limit: API service {} rate limited for URL {}, waiting {:.2f} seconds before retry (attempt {}/{})".format(
+                                api_url, str(orgUrl), wait_time, retry_count + 1, max_retries))
+                            time.sleep(wait_time)
+                            continue
+                    
+                    if "timeout" in error_response.lower() or "超时" in error_response:
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            # 指数退避 + 抖动
+                            base_delay = retry_delay * (2 ** (retry_count - 1))
+                            from java.util import Random
+                            rand = Random()
+                            jitter = rand.nextFloat() * base_delay * jitter_factor * 2 - base_delay * jitter_factor
+                            wait_time = base_delay + jitter
+                            
+                            self._callbacks.printOutput(
+                                "[INFO] Timeout: Request timed out for URL {}, waiting {:.2f} seconds before retry (attempt {}/{})".format(
+                                str(orgUrl), wait_time, retry_count + 1, max_retries))
                             time.sleep(wait_time)
                             continue
                 else:
-                    print("POST request failed for target URL %s with response code %s" % (str(orgUrl), str(responseCode)))
+                    self._callbacks.printOutput("[INFO] HTTP status: POST request returned {} for target URL {}".format(
+                        str(responseCode), str(orgUrl)))
                 return ""
                 
         except SSLHandshakeException as e:
-            self._callbacks.printError(
-                "SSL handshake failure for target URL %s (attempt %d/%d): %s" % 
-                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            self._callbacks.printOutput(
+                "[INFO] SSL: Handshake failure for target URL {} (attempt {}/{}): {}".format(
+                str(orgUrl), retry_count + 1, max_retries, str(e)))
             retry_count += 1
             if retry_count == max_retries:
                 return ""
             continue
             
         except EOFException as e:
-            self._callbacks.printError(
-                "Connection closed for target URL %s (attempt %d/%d): %s" % 
-                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            self._callbacks.printOutput(
+                "[INFO] Connection: Closed for target URL {} (attempt {}/{}): {}".format(
+                str(orgUrl), retry_count + 1, max_retries, str(e)))
             retry_count += 1
             if retry_count == max_retries:
                 return ""
             continue
             
         except SocketException as e:
-            self._callbacks.printError(
-                "Socket error for target URL %s (attempt %d/%d): %s" % 
-                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            self._callbacks.printOutput(
+                "[INFO] Network: Socket error for target URL {} (attempt {}/{}): {}".format(
+                str(orgUrl), retry_count + 1, max_retries, str(e)))
             retry_count += 1
             if retry_count == max_retries:
                 return ""
             continue
             
         except Exception as e:
-            self._callbacks.printError(
-                "An error occurred for target URL %s (attempt %d/%d): %s" % 
-                (str(orgUrl), retry_count + 1, max_retries, str(e)))
+            self._callbacks.printOutput(
+                "[INFO] General: Error occurred for target URL {} (attempt {}/{}): {}".format(
+                str(orgUrl), retry_count + 1, max_retries, str(e)))
             retry_count += 1
             if retry_count == max_retries:
                 return ""
             continue
+        finally:
+            try:
+                if writer is not None:
+                    writer.close()
+            except Exception as e:
+                self._callbacks.printOutput("[INFO] Cleanup: Error closing writer: {}".format(str(e)))
+                
+            try:
+                if outputStream is not None:
+                    outputStream.close()
+            except Exception as e:
+                self._callbacks.printOutput("[INFO] Cleanup: Error closing output stream: {}".format(str(e)))
+                
+            try:
+                if inputStream is not None:
+                    inputStream.close()
+            except Exception as e:
+                self._callbacks.printOutput("[INFO] Cleanup: Error closing input stream: {}".format(str(e)))
+                
+            try:
+                if errorStream is not None:
+                    errorStream.close()
+            except Exception as e:
+                self._callbacks.printOutput("[INFO] Cleanup: Error closing error stream: {}".format(str(e)))
             
     return ""
 
@@ -674,7 +934,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
 
     EDFilters = self.EDModel.toArray()
 
-    if pre_check(self, oldStatusCode, newStatusCode, oldContent, newContent, modifyFlag):
+    if pre_check(self, oldStatusCode, newStatusCode, oldContent, newContent, modifyFlag, oriUrl):
         impression, AI_res = checkBypass(self, oriUrl, oriBody, oldStatusCode, newStatusCode, oldContent, newContent,
                                          EDFilters, requestResponse,
                                          self.AndOrType.getSelectedItem(), True)
@@ -682,7 +942,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         impression, AI_res = self.ENFORCED_STR, ""
 
     if checkUnauthorized:
-        if pre_check(self, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized, modifyFlag=True):
+        if pre_check(self, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized, modifyFlag=True, oriUrl=oriUrl):
             EDFiltersUnauth = self.EDModelUnauth.toArray()
             impressionUnauthorized, _ = checkBypass(self, oriUrl, oriBody, oldStatusCode, statusCodeUnauthorized,
                                                     oldContent, contentUnauthorized,
@@ -692,29 +952,29 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
             impressionUnauthorized = self.ENFORCED_STR
 
     self._lock.acquire()
+    try:
+        row = self._log.size()
+        method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
 
-    row = self._log.size()
-    method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
+        if checkUnauthorized:
+            self._log.add(
+                LogEntry(self.currentRequestNumber, self._callbacks.saveBuffersToTempFiles(requestResponse), method,
+                         self._helpers.analyzeRequest(requestResponse).getUrl(), messageInfo, impression,
+                         self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized), impressionUnauthorized,
+                         AI_res))
 
-    if checkUnauthorized:
-        self._log.add(
-            LogEntry(self.currentRequestNumber, self._callbacks.saveBuffersToTempFiles(requestResponse), method,
-                     self._helpers.analyzeRequest(requestResponse).getUrl(), messageInfo, impression,
-                     self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized), impressionUnauthorized,
-                     AI_res))
+        else:
+            self._log.add(
+                LogEntry(self.currentRequestNumber, self._callbacks.saveBuffersToTempFiles(requestResponse), method,
+                         self._helpers.analyzeRequest(requestResponse).getUrl(), messageInfo, impression, None, "Disabled",
+                         AI_res))
 
-    else:
-        self._log.add(
-            LogEntry(self.currentRequestNumber, self._callbacks.saveBuffersToTempFiles(requestResponse), method,
-                     self._helpers.analyzeRequest(requestResponse).getUrl(), messageInfo, impression, None, "Disabled",
-                     AI_res))
-
-    SwingUtilities.invokeLater(UpdateTableEDT(self, "insert", row, row))
-    self.currentRequestNumber += 1
-    self._lock.release()
+        SwingUtilities.invokeLater(UpdateTableEDT(self, "insert", row, row))
+        self.currentRequestNumber += 1
+    finally:
+        self._lock.release()
 
 
-# 检查授权版本 2
 def checkAuthorizationV2(self, messageInfo):
     checkAuthorization(self, messageInfo,
                        self._extender._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
