@@ -537,11 +537,18 @@ class UpdateTableEDT(Runnable):
 
     def run(self):
         if self._action == "insert":
-            self._extender.tableModel.fireTableRowsInserted(self._firstRow, self._lastRow)
+            try:
+                self._extender.tableModel.fireTableRowsInserted(self._firstRow, self._lastRow)
+            except:
+                pass
         elif self._action == "update":
-            self._extender.tableModel.fireTableRowsUpdated(self._firstRow, self._lastRow)
+            try:
+                self._extender.tableModel.fireTableRowsUpdated(self._firstRow, self._lastRow)
+            except:
+                pass
         elif self._action == "delete":
-            self._extender.tableModel.fireTableRowsDeleted(self._firstRow, self._lastRow)
-        else:
-            print("Invalid action in UpdateTableEDT")
+            try:
+                self._extender.tableModel.fireTableRowsDeleted(self._firstRow, self._lastRow)
+            except:
+                pass
 

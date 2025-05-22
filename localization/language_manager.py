@@ -9,19 +9,29 @@
 """
 
 class LanguageManager:
-    """语言管理器类，负责加载不同语言的资源文件并提供文本获取接口"""
-    
     def __init__(self):
-        self.current_language = "en"  # 默认英文
+        self.current_language = "en"
         self.strings = {}
         self.load_language()
+        
+        try:
+            import sys
+            if sys.version_info[0] == 2:
+                if hasattr(sys, "setdefaultencoding"):
+                    reload(sys)
+                    sys.setdefaultencoding('utf-8')
+                    
+            try:
+                from java.lang import System
+                System.setProperty("file.encoding", "UTF-8")
+                System.setProperty("sun.jnu.encoding", "UTF-8")
+            except ImportError:
+                pass
+        except Exception as e:
+            print("Warning: Failed to set system encoding: " + str(e))
+            pass
     
     def set_language(self, language_code):
-        """设置当前语言
-        
-        Args:
-            language_code: 语言代码，支持 "en"(英文) 和 "zh"(中文)
-        """
         if language_code in ["en", "zh"]:
             self.current_language = language_code
             self.load_language()
@@ -36,60 +46,70 @@ class LanguageManager:
             else:
                 from localization.strings_en import STRINGS
             self.strings = STRINGS
-        except ImportError:
+            
+            if self.current_language == "zh":
+                for key, value in self.strings.items():
+                    if not isinstance(value, unicode) and isinstance(value, str):
+                        try:
+                            self.strings[key] = value.decode('utf-8')
+                        except UnicodeDecodeError:
+                            try:
+                                self.strings[key] = value.decode('gbk')
+                            except:
+                                pass
+                                
+        except ImportError as e:
+            print("Warning: Failed to load language file: " + str(e))
             # 如果加载失败，使用默认的英文
             from localization.strings_en import STRINGS
             self.strings = STRINGS
     
     def get_text(self, key, default=""):
-        """获取指定键的本地化文本
-        
-        Args:
-            key: 文本资源键名
-            default: 如果键不存在时返回的默认值
-            
-        Returns:
-            本地化的文本字符串
-        """
         text = self.strings.get(key, default)
         
-        # 处理中文字符串在Jython环境中的编码问题
         if self.current_language == "zh":
             try:
-                # 尝试将Unicode字符串解码为UTF-8，然后再编码为Java环境使用的字符集
                 return self._fix_encoding(text)
-            except Exception:
-                pass
+            except Exception as e:
+                print("Warning: Failed to fix encoding for key {}: {}".format(key, str(e)))
+                return text
         return text
     
     def _fix_encoding(self, text):
-        """处理中文字符串编码问题
-        
-        在Jython环境中，中文字符可能需要特殊处理以正确显示
-        """
+        if text is None:
+            return ""
+            
         try:
-            # 尝试使用Java String方法确保正确编码
-            from java.lang import String
+            from java.lang import String as JavaString
+            if isinstance(text, JavaString):
+                return text
+                
             if isinstance(text, unicode):
-                # 如果已经是unicode，直接转换为Java String
-                return String(text)
+                return JavaString(text)
             else:
-                # 如果是str类型，先解码为unicode，再转换为Java String
-                return String(text.decode('utf-8'))
+                encodings = ['utf-8', 'gbk', 'gb2312', 'gb18030', 'latin-1', 'cp936']
+                for encoding in encodings:
+                    try:
+                        return JavaString(text.decode(encoding))
+                    except UnicodeDecodeError:
+                        continue
+                    except Exception:
+                        continue
+                try:
+                    return JavaString(text)
+                except:
+                    return text
+                    
         except ImportError:
-            # 如果不在Jython环境中，直接返回原文本
             return text
-        except Exception:
-            # 处理过程中出现任何错误，返回原文本
+        except Exception as e:
+            print("Warning: Error in fix_encoding: " + str(e))
             return text
 
-# 创建全局语言管理器实例
 _language_manager = LanguageManager()
 
 def get_language_manager():
-    """获取全局语言管理器实例"""
     return _language_manager
 
 def get_text(key, default=""):
-    """便捷函数，直接获取指定键的本地化文本"""
     return _language_manager.get_text(key, default) 

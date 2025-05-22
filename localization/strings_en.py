@@ -5,7 +5,7 @@
 @File   : strings_en.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   : English language resource file
+@Desc   : 英语选项卡文字
 """
 
 # Main UI strings
@@ -98,6 +98,17 @@ STRINGS = {
     "all_statuses": "All Statuses",
     "as_table_filter": "As table filter",
     
+    # Export related strings
+    "export_no_entries": "No entries to export",
+    "export_no_matches": "No entries match the filter criteria",
+    "export_failed": "Export Failed",
+    "export_empty": "Export Empty",
+    "export_success": "Export Success",
+    "export_error": "Export Error",
+    "export_success_message": "Successfully exported ",
+    "export_entries": " entries",
+    "export_error_message": "Failed to export report: ",
+    
     # AI analyzer
     "ai_analyzer": "AI Analyzer",
     "ai_key": "API Key",
@@ -118,5 +129,10 @@ STRINGS = {
     "language_zh": "Chinese",
     "language_toggle": u"EN/中",
     "language_changed": "Language changed successfully.",
-    "apply_language": "Apply"
+    "apply_language": "Apply",
+    
+    # Model validation
+    "model_empty": "Model name cannot be empty",
+    "unsupported_model": "Unsupported model vendor, please contact developer",
+    "warning": "Warning"
 } 

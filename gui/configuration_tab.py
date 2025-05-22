@@ -4,7 +4,7 @@
 @File   : configuration_tab.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   :
+@Desc   : 配置选项卡
 """
 
 from javax.swing import DefaultComboBoxModel
@@ -36,7 +36,6 @@ from localization.ui_updater import update_main_ui, update_table_headers
 class ConfigurationTab():
     def __init__(self, extender):
         self._extender = extender
-        # 先创建所有UI组件
         self.draw()
         # 移除实时验证监听器
         # self._extender.aiModelTextField.getDocument().addDocumentListener(DocumentListener(self._extender))
@@ -48,9 +47,7 @@ class ConfigurationTab():
         self._extender.startButton = JToggleButton(get_text("autorize_is_off", "AutorizePro is off"), actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
         
-        # 添加语言切换按钮 - 特殊处理按钮文本以确保中文正确显示
         toggle_text = get_text("language_toggle", "EN/中")
-        # 尝试使用Java String确保Unicode字符正确显示
         try:
             from java.lang import String
             toggle_text = String(toggle_text) if isinstance(toggle_text, unicode) else String(toggle_text.decode('utf-8'))
@@ -63,27 +60,22 @@ class ConfigurationTab():
         self._extender.apiKeyField.setBounds(50, 100, 200, 30)
         self._extender.apiKeyEnabledCheckbox = JCheckBox(get_text("enable_ai", "KEY"), actionPerformed=self.validateModelOnKeyToggle)
         self._extender.apiKeyEnabledCheckbox.setBounds(10, 60, 100, 30)
-        # 改用文本框 + 下拉按钮组合
-        # 1. 创建文本框和按钮，确保Y坐标和高度完全相同
-        yPos = 140  # 使用同一个Y坐标变量
-        height = 25  # 使用统一的高度
+        # 改用文本框 + 下拉按钮组合来支持用户输入模型
+        yPos = 140
+        height = 25
         
-        # 缩短编辑框宽度
         self._extender.aiModelTextField = JTextField("qwen-turbo", 7)
         self._extender.aiModelTextField.setBounds(50, yPos, 95, height)
         
-        # 2. 创建下拉按钮 - 使用相同的Y坐标和高度确保对齐，使用ASCII字符避免乱码
         self._extender.modelSelectButton = JButton("+", actionPerformed=self.showModelOptions)
         self._extender.modelSelectButton.setBounds(145, yPos, 25, height)
         
-        # 3. 预设模型列表
         self._predefinedOptions = ["qwen-turbo", "qwen-plus", "qwen-max", "deepseek-chat","deepseek-reasoner",
                                   "gpt-4o-mini", "gpt-4o", "glm-4-flash", "glm-4-air", "hunyuan-lite", "hunyuan-standard"]
         
-        # 添加支持的模型厂商列表
+        # 支持的模型厂商列表
         self._supportedVendors = ["qwen", "deepseek", "gpt", "glm", "hunyuan"]
         
-        # 4. 创建模型选择菜单(将在点击按钮时显示)
         self._modelPopupMenu = JPopupMenu()
 
         self._extender.clearButton = JButton(get_text("clear_button", "Clear List"), actionPerformed=self.clearList)
@@ -140,15 +132,13 @@ class ConfigurationTab():
         self._extender.fetchAuthorizationHeaderButton.setEnabled(False)
         self._extender.fetchAuthorizationHeaderButton.setBounds(260, 330, 220, 30)
         
-        # 添加20像素的垂直间距
         verticalSpacerPanel = JPanel()
         verticalSpacerPanel.setPreferredSize(Dimension(1, 20))
 
-        # 添加认证头配置区域 - 移到fetchCookiesHeaderButton下方
+        # 认证头配置区域 - 位于fetchCookiesHeaderButton下方
         self._extender.authHeadersLabel = JLabel(get_text("auth_headers_label", "Authentication Headers:"))
         self._extender.authHeadersLabel.setBounds(10, 370, 300, 30)
         
-        # 默认的认证头类型
         default_auth_headers = "cookie,authorization,token"
         self._extender.custom_auth_headers = default_auth_headers.split(",")
         
@@ -538,7 +528,6 @@ class ConfigurationTab():
             self._extender.fetchAuthorizationHeaderButton.setEnabled(False)
 
     def clearList(self, event):
-        # 使用try-finally确保锁始终被释放
         self._extender._lock.acquire()
         try:
             oldSize = self._extender._log.size()
@@ -591,14 +580,12 @@ class ConfigurationTab():
         """实现语言切换功能，在中文和英文之间切换"""
         from localization.ui_updater import update_main_ui, update_table_headers
         
-        # 获取语言管理器
         manager = get_language_manager()
         
         # 切换语言：如果当前是英文则切换到中文，如果是中文则切换到英文
         current_language = manager.current_language
         new_language = "zh" if current_language == "en" else "en"
         
-        # 设置新语言
         if manager.set_language(new_language):
             # 更新按钮文本 - 特殊处理确保中文字符正确显示
             toggle_text = get_text("language_toggle", "EN/中")
@@ -609,65 +596,64 @@ class ConfigurationTab():
                 pass
             self._extender.toggleLanguageButton.setText(toggle_text)
             
-            # 添加Jython环境检测
             try:
-                # 尝试设置Java环境字符集为UTF-8
                 from java.lang import System
                 System.setProperty("file.encoding", "UTF-8")
+                
+                # 设置Jython默认编码为UTF-8
+                import sys
+                if hasattr(sys, "setdefaultencoding"):
+                    reload(sys)
+                    sys.setdefaultencoding('utf-8')
             except:
                 pass
             
-            # 更新界面，使用try-except捕获可能的异常
+            message = get_text("language_changed", "语言已成功更改")
+            title = get_text("extension_name", "AutorizePro")
+
+            try:
+                from java.lang import String
+                if isinstance(message, unicode):
+                    message = String(message)
+                else:
+                    message = String(message.decode('utf-8'))
+                
+                if isinstance(title, unicode):
+                    title = String(title)
+                else:
+                    title = String(title.decode('utf-8'))
+            except Exception as e:
+                pass
+
             try:
                 update_main_ui(self._extender)
             except Exception as e:
-                print("警告: 语言切换后更新主界面失败: " + str(e))
-                
+                pass
+            
             try:
                 update_table_headers(self._extender)
             except Exception as e:
-                print("警告: 语言切换后更新表格头失败: " + str(e))
-            
-            # 显示语言已更改的提示
-            from javax.swing import JOptionPane
-            message = get_text("language_changed", "语言已成功更改")
-            title = get_text("extension_name", "AutorizePro")
-            
-            # 使用Java的String来确保Unicode字符正确显示
-            try:
-                from java.lang import String
-                if new_language == "zh":
-                    # 对中文消息进行特殊处理
-                    if not isinstance(message, unicode):
-                        message = message.decode('utf-8')
-                    message = String(message)
-                    title = String(title)
-            except:
                 pass
-                
-            JOptionPane.showMessageDialog(
-                None, 
-                message,
-                title, 
-                JOptionPane.INFORMATION_MESSAGE
-            )
+            
+
+            from javax.swing import JOptionPane
+            JOptionPane.showMessageDialog(None, message, title, JOptionPane.INFORMATION_MESSAGE)
+            
+            return True
+        
+        return False
 
     def updateAuthHeaders(self, event):
-        """更新自定义认证头列表"""
         auth_headers_text = self._extender.authHeadersField.getText()
         if auth_headers_text:
-            # 分割并清理输入的认证头类型
             auth_headers = [h.strip() for h in auth_headers_text.split(",") if h.strip()]
             self._extender.custom_auth_headers = auth_headers
-            self._extender._callbacks.printOutput(get_text("auth_headers_updated", "Authentication headers updated successfully") + ": " + ", ".join(auth_headers))
         else:
-            # 如果输入为空，恢复默认值
+            # 如果输入的认证头为空，恢复下面的默认值
             default_auth_headers = ["cookie", "authorization", "token"]
             self._extender.custom_auth_headers = default_auth_headers
             self._extender.authHeadersField.setText("cookie,authorization,token")
-            self._extender._callbacks.printOutput(get_text("auth_headers_reset", "Reset to default authentication headers"))
         
-        # 显示成功提示
         JOptionPane.showMessageDialog(
             None,
             get_text("auth_headers_updated", "Authentication headers updated successfully"),
@@ -676,15 +662,13 @@ class ConfigurationTab():
         )
         
     def validateModelOnKeyToggle(self, event):
-        """在勾选 KEY 复选框时验证模型"""
+        """在用户勾选 KEY 复选框时验证模型是否符合我们的限制"""
         if self._extender.apiKeyEnabledCheckbox.isSelected():
             model_name = self._extender.aiModelTextField.getText().strip()
             if not model_name:
-                # 获取当前语言的消息
                 message = get_text("model_empty", "Model name cannot be empty")
                 title = get_text("warning", "Warning")
                 
-                # 确保中文正确显示
                 try:
                     from java.lang import String
                     if isinstance(message, unicode):
@@ -708,11 +692,9 @@ class ConfigurationTab():
                 return
                 
             if not self.validateModel(model_name):
-                # 获取当前语言的消息
                 message = get_text("unsupported_model", "Unsupported model vendor, please contact developer")
                 title = get_text("warning", "Warning")
                 
-                # 确保中文正确显示
                 try:
                     from java.lang import String
                     if isinstance(message, unicode):
@@ -736,11 +718,9 @@ class ConfigurationTab():
                 return
 
     def validateModel(self, model_name):
-        # 首先检查是否在预设模型列表中
         if model_name in self._predefinedOptions:
             return True
             
-        # 如果不在预设列表中，则检查是否包含支持的厂商前缀
         for vendor in self._supportedVendors:
             if model_name.lower().startswith(vendor):
                 return True
@@ -748,21 +728,15 @@ class ConfigurationTab():
         return False
         
     def showModelOptions(self, event):
-        """显示模型选择菜单"""
-        # 清除旧菜单项
         self._modelPopupMenu.removeAll()
         
-        # 为每个预设模型创建菜单项
         for option in self._predefinedOptions:
             menuItem = JMenuItem(option, actionPerformed=lambda e, opt=option: self.selectModel(opt))
             self._modelPopupMenu.add(menuItem)
             
-        # 获取按钮位置并在其下方显示菜单
         self._modelPopupMenu.show(self._extender.modelSelectButton, 0, self._extender.modelSelectButton.getHeight())
     
     def selectModel(self, model):
-        """选择模型并设置到文本框"""
-        # 直接设置预设模型，因为这些都是经过验证的
         self._extender.aiModelTextField.setText(model)
 
 
@@ -811,5 +785,5 @@ class DocumentListener(DocumentListener):
                 # 清空无效输入
                 self._extender.aiModelTextField.setText("")
         except Exception as e:
-            print("模型验证出错: " + str(e))
+            pass
 

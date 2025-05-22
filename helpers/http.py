@@ -75,7 +75,6 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                                 modifiedFlag = True
                                 query = newQuery
                     else:
-                        print("Skipping invalid replacement rule: '{}'".format(param))
                         continue
 
                 if query:
@@ -214,8 +213,6 @@ def getResponseBody(self, requestResponse):
     try:
         return body_bytes.decode(charset)
     except (UnicodeDecodeError, LookupError) as e:
-        self._callbacks.printOutput("[INFO] Charset: Error decoding response body from URL {} with charset {}: {}".format(
-            url_info, charset, str(e)))
         try:
             return body_bytes.decode("utf-8-sig")
         except (UnicodeDecodeError, LookupError):
@@ -224,8 +221,6 @@ def getResponseBody(self, requestResponse):
             except (UnicodeDecodeError, LookupError):
                 return body_bytes.decode("UTF-8", errors="replace")
     except Exception as e:
-        self._callbacks.printOutput("[INFO] Decoding: Unexpected error decoding response body from URL {}: {}".format(
-            url_info, str(e)))
         return body_bytes.decode("UTF-8", errors="replace")
 
 

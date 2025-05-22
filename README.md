@@ -3,7 +3,7 @@
 - [English README IS HERE](https://github.com/sule01u/AutorizePro/blob/master/README_en.md)
 
 # 🧿 AutorizePro (内置AI分析模块 ❤️‍🔥):  
-### 一句话介绍工具： AutorizePro 是一款创新性的内置AI分析模块的专注于越权检测的 Burp 插件 (已有多个白帽反馈用工具嘎嘎挖到src洞, 每周末更新, 欢迎Star🌟以便持续跟踪项目最新版本功能)
+### 一句话介绍工具： AutorizePro 是一款创新性的内置AI分析模块的专注于越权检测的 Burp 插件 (已有多个白帽反馈用工具嘎嘎挖到src洞,  欢迎Star🌟持续跟踪项目最新版本功能)
 > **🟣️ 未点击启用AI功能时走正常检测逻辑，AI为可选项。由于接口响应一般多种多样，规则难以覆盖；启用AI分析会大幅提升检出效率以及准确率，强烈建议试试！！时间是宝贵的，我们应该尽量让AI来替我们做那些耗时且重复的工作，快来十倍速挖洞吧！**
 
 ### 工具背景
@@ -31,36 +31,36 @@
 
 ### 3️⃣ 安装 AutorizePro 插件
 	1. 下载代码仓库最新版本的发布zip包到本地，解压
-    2. 打开 Burp Suite，导航到 Extender -> Extensions -> Add
-    3. 在 Extension Type 选择框中，选择python
-    4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径 (注意路径不能有中文，否则安装失败)
+	2. 打开 Burp Suite，导航到 Extender -> Extensions -> Add
+	3. 在 Extension Type 选择框中，选择python
+	4. 在 Extension file 选择框中，选择代码仓库中 AutorizePro.py 文件路径 (注意路径不能有中文，否则安装失败)
 
 ### AutorizePro 插件安装完成界面 🎉
 > 💡 你可通过拉动中间的侧边栏调整展示页和配置页的显示比例；配置界面可通过上下拉动分界线调整配置页面比例；
 
-![cover](imgs/cover.png)
+![cover](imgs/cover_ch.png)
 
 ## 🔫 使用 AutorizePro 插件
     1. 打开配置选项卡：点击 AutorizePro -> Configuration。
-
+    
     2. 通过fetch cookie header按钮获取最新请求的验证头 或 手动复制低权限用户的验证头（通常是 Cookie 或 Authorization），并将其复制到标有 “Insert injected header here” 的文本框中。注意：如果请求中已经包含了该头部，插件会替换现有的头部，否则会添加新头部。
-
+    
     3. 如果不需要进行未授权的测试（即不带任何 cookie 的请求，用于检查接口是否存在身份验证，而不仅仅是低权限用户的越权检测），可以取消勾选 Check unauthenticated (默认开启)。
-
+    
     4. 勾选 Intercept requests from Repeater，通过 Repeater 发送的请求也会被进行插件处理。
-
+    
     5. 点击 AutorizePro is off 按钮启用插件，让 AutorizePro 开始拦截流量，并进行授权检测。
-
+    
     6. 打开浏览器，并配置代理设置，使流量能够通过 Burp 代理。
-
+    
     7. 使用高权限用户访问你想测试的应用程序，测试修改类资源时可使用 Match/Replace 配置越权测试时需要修改的资源信息。
-
+    
     8. 在 AutorizePro 插件的左侧结果展示界面中，你将看到请求的 URL 和 对应的权限检查状态。
     
     9.  选择模型，填写对应api key; 
-
+    
     10. 勾选复选框后，启用 Key 时，符合AI分析触发条件的请求会交由 AI 进一步分析，结果将展示在 AI. Analyzer 列。
-
+    
     11. 点击左侧展示页面的某个 URL，可以查看它的原始请求、修改后的请求以及未经身份验证的请求/响应，方便你分辨差异。
 
 ###  🌠 使用效果示例
@@ -68,11 +68,11 @@
 
 > ⬇️ 替换cookie方式测试越权
 
-![eg](imgs/eg.png)
+![eg](imgs/eg001_ch.png)
 
 > ⬇️ 替换参数方式测试越权
 
-![eg](imgs/eg2.png)
+![eg](imgs/eg002_ch.png)
 
 > 查看选中条目的具体请求信息，可同时展示越权请求、原始请求、未授权请求，方便对比差异
 

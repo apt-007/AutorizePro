@@ -15,21 +15,13 @@ from javax.swing import BorderFactory
 from java.awt import Color
 
 def update_main_ui(extender):
-    """更新主界面文本
-    
-    Args:
-        extender: Burp扩展对象
-    """
-    # 更新扩展名称
+    """更新主界面文本"""
     extender._callbacks.setExtensionName(get_text("extension_name", "AutorizePro"))
     
-    # 更新选项卡文本
     if hasattr(extender, "tabs"):
-        # 如果tabs已经初始化，更新标签
         extender.tabs.setTitleAt(0, get_text("tab_results", "Request/Response Viewers"))
         extender.tabs.setTitleAt(1, get_text("tab_configuration", "Configuration"))
         
-        # 更新请求/响应查看器
         if hasattr(extender, "modified_requests_tabs"):
             extender.modified_requests_tabs.setTitleAt(0, get_text("table_modified", "Modified Request"))
             extender.modified_requests_tabs.setTitleAt(1, get_text("table_modified_response", "Modified Response"))
@@ -45,18 +37,15 @@ def update_main_ui(extender):
             extender.unauthenticated_requests_tabs.setTitleAt(1, get_text("table_unauthorized_response", "Unauthenticated Response"))
             extender.unauthenticated_requests_tabs.setTitleAt(2, get_text("expand", "Expand"))
     
-    # 更新按钮文本
     if hasattr(extender, "startButton"):
         if extender.startButton.isSelected():
             extender.startButton.setText(get_text("autorize_is_on", "AutorizePro is on"))
         else:
             extender.startButton.setText(get_text("autorize_is_off", "AutorizePro is off"))
     
-    # 更新语言切换按钮
     if hasattr(extender, "toggleLanguageButton"):
         extender.toggleLanguageButton.setText(get_text("language_toggle", "EN/中"))
     
-    # 更新配置面板
     if hasattr(extender, "doUnauthorizedRequest"):
         extender.doUnauthorizedRequest.setText(get_text("check_unauthenticated", "Check unauthenticated"))
     
@@ -84,7 +73,6 @@ def update_main_ui(extender):
     if hasattr(extender, "replaceQueryParam"):
         extender.replaceQueryParam.setText(get_text("replace_query_params", "Replace query params"))
         
-    # 更新认证头配置区域
     if hasattr(extender, "authHeadersLabel"):
         extender.authHeadersLabel.setText(get_text("auth_headers_label", "Authentication Headers:"))
         
@@ -97,9 +85,7 @@ def update_main_ui(extender):
     if hasattr(extender, "apiKeyEnabledCheckbox"):
         extender.apiKeyEnabledCheckbox.setText(get_text("enable_ai", "KEY"))
     
-    # 更新Export面板组件
     if hasattr(extender, "exportPnl") and extender.exportPnl is not None:
-        # 更新面板边框标题
         if hasattr(extender, "resultExportPanel"):
             border = BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color(120, 120, 120)), 
@@ -112,7 +98,6 @@ def update_main_ui(extender):
                 get_text("save_restore", "Save/Restore"))
             extender.configPanel.setBorder(border)
         
-        # 更新导出面板上的所有按钮和标签
         if hasattr(extender, "exportButton"):
             extender.exportButton.setText(get_text("export_button", "Export"))
         
@@ -125,14 +110,12 @@ def update_main_ui(extender):
         if hasattr(extender, "restoreStateButton"):
             extender.restoreStateButton.setText(get_text("restore_button", "Import Saved Config"))
         
-        # 更新标签文本
         if hasattr(extender, "exportLType"):
             extender.exportLType.setText(get_text("export_file_type", "File Type:"))
             
         if hasattr(extender, "exportLES"):
             extender.exportLES.setText(get_text("export_statuses", "Statuses:"))
         
-        # 更新下拉框内容
         if hasattr(extender, "exportES"):
             currentSelection = extender.exportES.getSelectedItem()
             exportESItems = [
@@ -146,20 +129,16 @@ def update_main_ui(extender):
             for item in exportESItems:
                 extender.exportES.addItem(item)
             
-            # 尝试恢复之前的选择
             try:
                 extender.exportES.setSelectedItem(currentSelection)
             except:
-                # 如果找不到之前的选择，选择第一项
                 if extender.exportES.getItemCount() > 0:
                     extender.exportES.setSelectedIndex(0)
         
-        # 通知组件刷新
         extender.exportPnl.revalidate()
         extender.exportPnl.repaint()
     
     if hasattr(extender, "filtersTabs") and extender.filtersTabs is not None:
-        # 更新过滤器选项卡标题
         extender.filtersTabs.setTitleAt(0, get_text("enforcement_detector", "Privilege Enforcement Rules"))
         extender.filtersTabs.setTitleAt(1, get_text("enforcement_detector_unauthorized", "Unauthorized Enforcement Rules"))
         extender.filtersTabs.setTitleAt(2, get_text("interception_filters", "Interception Filters"))
@@ -167,7 +146,6 @@ def update_main_ui(extender):
         extender.filtersTabs.setTitleAt(4, get_text("table_filter", "Table Filter"))
         extender.filtersTabs.setTitleAt(5, get_text("save_restore", "Save/Restore"))
         
-        # 更新表格过滤器组件
         if hasattr(extender, "filterLModified"):
             extender.filterLModified.setText(get_text("filter_modified", "Modified:"))
         if hasattr(extender, "filterLUnauthenticated"):
@@ -178,20 +156,13 @@ def update_main_ui(extender):
             extender.showDisabledUnauthenticated.setText(get_text("filter_disabled", "Disabled"))
 
 def update_table_headers(extender):
-    """更新表格列头
-    
-    Args:
-        extender: Burp扩展对象
-    """
     if hasattr(extender, "tableModel") and extender.tableModel is not None:
         # 对于AbstractTableModel，我们不能直接设置列名
         # 只能通知UI组件数据模型结构已变化，让它重新获取列名
         extender.tableModel.fireTableStructureChanged()
         
-        # 更新列宽 - 获取表的首选宽度
         if hasattr(extender, "logTable"):
             tableWidth = extender.logTable.getPreferredSize().width
-            # 修改之后，需要重新设置列宽
             extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
             extender.logTable.getColumn(get_text("table_method", "Method")).setPreferredWidth(Math.round(tableWidth / 50 * 3))
             extender.logTable.getColumn(get_text("table_url", "URL")).setPreferredWidth(Math.round(tableWidth / 50 * 25))
@@ -202,7 +173,6 @@ def update_table_headers(extender):
             extender.logTable.getColumn(get_text("table_unauthorized_status", "Unauth. Status")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
             extender.logTable.getColumn(get_text("table_ai_analyzer", "AI. Analyzer")).setPreferredWidth(Math.round(tableWidth / 50 * 4))
             
-            # 刷新表头
             header = extender.logTable.getTableHeader()
             if header is not None:
                 header.repaint() 

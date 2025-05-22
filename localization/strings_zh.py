@@ -5,13 +5,11 @@
 @File   : strings_zh.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   : 中文语言资源文件
+@Desc   : 中文选项卡文字
 """
 
 # 使用Unicode编码确保中文字符在Jython/Java环境中正确显示
-# 为安全起见，我们将所有中文字符转换为Unicode转义序列
 
-# 主要UI字符串
 STRINGS = {
     # 扩展名称和选项卡
     "extension_name": "AutorizePro",
@@ -57,11 +55,6 @@ STRINGS = {
     "table_unauthorized_len": u"未授权长度",
     "table_unauthorized_status": u"未授权状态",
     
-    # 状态消息 - 保持与英文一致
-    "status_bypassed": "Bypassed!",
-    "status_enforced": "Enforced!",
-    "status_is_enforced": "Is enforced??? (please configure enforcement detector)",
-    
     # 认证检测器
     "enforcement_detector": u"已鉴权验证规则",
     "enforcement_detector_unauthorized": u"未授权验证规则",
@@ -98,7 +91,19 @@ STRINGS = {
     "filter_unauthenticated": u"未授权请求:",
     "filter_ai_analyzed": u"AI分析结果:",
     "all_statuses": u"所有状态",
-    "as_table_filter": u"使用表格过滤器",
+    "as_table_filter": u"复用结果状态过滤配置",
+    
+    # 导出功能相关
+    "export_no_entries": u"没有可导出的测试结果",
+    "export_no_matches": u"没有符合过滤条件的测试结果",
+    "export_failed": u"导出失败",
+    "export_empty": u"导出为空",
+    "export_success": u"导出成功",
+    "export_error": u"导出错误",
+    "export_success_message": u"已成功导出 ",
+    "export_entries": u" 条测试结果",
+    "export_error_message": u"导出报告失败: ",
+    "filter_disabled": u"已禁用",
     
     # AI分析器
     "ai_analyzer": u"AI分析器",
@@ -119,5 +124,11 @@ STRINGS = {
     "language_zh": u"中文",
     "language_toggle": u"EN/中",
     "language_changed": u"语言已成功更改",
-    "apply_language": u"应用"
+    "apply_language": u"应用",
+    
+    # 模型验证相关
+    "model_empty": u"模型名称不能为空",
+    "unsupported_model": u"暂不支持该厂商模型，请联系开发者",
+    "warning": u"警告",
+    "enable_ai": u"启用AI",
 } 

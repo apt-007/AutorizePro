@@ -1,7 +1,7 @@
 ![image](https://github.com/user-attachments/assets/e61f8069-f775-419d-b020-37d0f0ee1227)
 
 # 🧿 AutorizePro (AI Analysis Module is Live ❤️‍🔥):  
-### One-Sentence Introduction: AutorizePro is an innovative Burp plugin with a built-in AI analysis module, specialized in authorization bypass detection. (The tool has helped multiple bounty hunters find vulnerabilities，updated every weekend, welcome to Star🌟 to keep track of the latest version of the project features)
+### One-Sentence Introduction: AutorizePro is an innovative Burp plugin with a built-in AI analysis module, specialized in authorization bypass detection. (welcome to Star🌟 )
 
 > **🟣️ When the AI feature is disabled, it uses the standard detection logic. AI analysis is optional but highly recommended. Due to the diverse nature of API responses, rule-based logic often falls short. Enabling AI analysis significantly improves efficiency and accuracy. Time is precious, so let AI handle repetitive and time-consuming tasks. Start discovering vulnerabilities at ten times the speed!**
 
@@ -29,36 +29,36 @@
 
 ### 3️⃣ Install the AutorizePro Plugin
 	1. Download the latest release ZIP package from the code repository, extract it locally.
-    2. Open Burp Suite, navigate to Extender -> Extensions -> Add.
-    3. In the Extension Type dropdown, select python.
-    4. In the Extension File field, choose the path to the `AutorizePro.py` file from the repository.
+	2. Open Burp Suite, navigate to Extender -> Extensions -> Add.
+	3. In the Extension Type dropdown, select python.
+	4. In the Extension File field, choose the path to the `AutorizePro.py` file from the repository.
 
 ### AutorizePro Plugin Successfully Installed 🎉
 > 💡 You can adjust the display ratio between the showcase page and the configuration page by dragging the middle sidebar. The configuration interface’s layout can be adjusted by dragging the divider up or down.
 
-![cover](imgs/cover.png)
+![cover](imgs/cover_en.png)
 
 ## 🔫 Using the AutorizePro Plugin
     1. Open the configuration tab by clicking AutorizePro -> Configuration.
-
+    
     2. Use the `fetch cookie header` button to fetch the latest authentication header from the request or manually copy the low-privileged user's authentication header (usually Cookie or Authorization), then paste it into the textbox labeled “Insert injected header here.” Note: If the request already contains the header, the plugin will replace it; otherwise, a new header will be added.
-
+    
     3. If you don’t need to test unauthenticated requests (i.e., requests without any cookies to check if the endpoint requires authentication), you can uncheck the `Check unauthenticated` box (enabled by default).
-
+    
     4. Enable the `Intercept requests from Repeater` checkbox to process requests sent from Repeater with the plugin.
-
+    
     5. Click the `AutorizePro is off` button to enable the plugin, allowing AutorizePro to start intercepting traffic and performing authorization checks.
-
+    
     6. Open your browser and configure proxy settings to direct traffic through Burp's proxy.
-
+    
     7. Use a high-privileged user account to access the application you want to test. When modifying resources for the privilege escalation test, you can use the Match/Replace configuration to modify the resource information needed for the test.
-
+    
     8. In the left-side results panel of the AutorizePro plugin, you will see the URL of the request and the corresponding privilege check status.
-
+    
     9. Currently, only the Aliyun Tongyi Qianwen API key (starting with `sk`) is supported. How to obtain the API key: https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key.
-
+    
     10. When the API key is enabled, requests that meet the AI analysis trigger conditions will be further analyzed by AI, and results will be displayed in the `AI Analyzer` column.
-
+    
     11. By clicking a URL in the left-side results panel, you can view its original request, modified request, and unauthenticated request/response to help distinguish differences.
 
 ### 🌠 Example Usage Effect
@@ -66,11 +66,11 @@
 
 > ⬇️ Test privilege escalation by replacing cookies
 
-![eg](imgs/eg.png)
+![eg](imgs/eg001_en.png)
 
 > ⬇️ Test privilege escalation by replacing parameters
 
-![eg2](imgs/eg2_en.png)
+![eg2](imgs/eg002_en.png)
 
 > View the specific request determined by AI to be unauthorized, and simultaneously display the unauthorized request, original request, and unauthenticated request to easily compare differences.
 

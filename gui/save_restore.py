@@ -5,7 +5,7 @@
 @File   : save_restore.py
 @Author : sule01u
 @Date   : 2024/10/10
-@Desc   :
+@Desc   : 保存和恢复配置
 """
 
 from javax.swing import SwingUtilities
@@ -19,8 +19,7 @@ import csv, base64, json, re, sys
 from java.io import File
 from javax.swing.filechooser import FileNameExtensionFilter
 
-# This code is necessary to maximize the csv field limit for the save and
-# restore functionality
+
 maxInt = sys.maxsize
 decrement = True
 while decrement:
@@ -55,22 +54,20 @@ class SaveRestore():
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setDialogTitle("State output file")
-        # 设置默认文件后缀为.autorize
-        fileChooser.setSelectedFile(File("autorize_config.autorize"))
+        # 设置配置文件默认后缀为.autorizepro
+        fileChooser.setSelectedFile(File("autorizepro_config.autorizepro"))
         userSelection = fileChooser.showSaveDialog(parentFrame)
 
         if userSelection == JFileChooser.APPROVE_OPTION:
             exportFile = fileChooser.getSelectedFile()
-            # 确保文件名以.autorize结尾
             filePath = exportFile.getAbsolutePath()
-            if not filePath.lower().endswith(".autorize"):
-                filePath += ".autorize"
+            if not filePath.lower().endswith(".autorizepro"):
+                filePath += ".autorizepro"
                 exportFile = File(filePath)
                 
             with open(exportFile.getAbsolutePath(), 'wb') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-                # Configuration
                 tempRow = ["ReplaceString", base64.b64encode(self._extender.replaceString.getText())]
                 csvwriter.writerow(tempRow)
                 
@@ -89,7 +86,7 @@ class SaveRestore():
                             tempRow = ["AiModel", str(modelName)]
                             csvwriter.writerow(tempRow)
                     except:
-                        print("Warning: Could not save AI model setting")
+                        pass
 
                 for EDFilter in self._extender.EDModel.toArray():
                     tempRow = ["EDFilter", base64.b64encode(EDFilter)]
@@ -163,9 +160,9 @@ class SaveRestore():
         fileChooser = JFileChooser()
         fileChooser.setDialogTitle("State import file")
         
-        # 添加文件过滤器，只显示.autorize文件
+        # 添加文件过滤器，只显示.autorizepro文件
         # 使用英文描述避免乱码问题
-        fileFilter = FileNameExtensionFilter("AutorizePro Config Files (*.autorize)", ["autorize"])
+        fileFilter = FileNameExtensionFilter("AutorizePro Config Files (*.autorizepro)", ["autorizepro"])
         fileChooser.addChoosableFileFilter(fileFilter)
         fileChooser.setFileFilter(fileFilter)
         
@@ -184,23 +181,19 @@ class SaveRestore():
                 csvreader = csv.reader(csvfile, delimiter='\t', quotechar='|')
 
                 for row in csvreader:
-                    # Configuration
                     if row[0] == "ReplaceString":
                         self._extender.replaceString.setText(base64.b64decode(row[1]))
                         continue
                     
-                    # 恢复API密钥
                     if row[0] == "ApiKey" and hasattr(self._extender, "apiKeyField"):
                         self._extender.apiKeyField.setText(base64.b64decode(row[1]))
                         continue
                     
-                    # 恢复模型选择
                     if row[0] == "AiModel" and hasattr(self._extender, "aiModelTextField"):
                         try:
-                            # 直接设置到文本框
                             self._extender.aiModelTextField.setText(row[1])
                         except Exception as e:
-                            print("Warning: Could not set AI model to " + row[1] + ": " + str(e))
+                            pass
                         continue
 
                     if row[0] in modelMap:
@@ -223,7 +216,6 @@ class SaveRestore():
                             try:
                                 d["regexMatch"] = re.compile(d["match"])
                             except re.error:
-                                print("ERROR: Regex to restore is invalid:", d["match"])
                                 continue
                         self._extender.badProgrammerMRModel[key] = d
                         self._extender.MRModel.addElement(key)
@@ -239,11 +231,10 @@ class SaveRestore():
                         isSelected = json.loads(row[1])
                         try:
                             self._extender.exportPnl.getComponents()[-1].setSelected(isSelected)
-                        except TypeError:  # suppress TypeError: None required for void return
+                        except TypeError:
                             pass
                         continue
 
-                    # Request/response list
                     tempRequestResponseHost = row[0]
                     tempRequestResponsePort = row[1]
                     tempRequestResponseProtocol = row[2]
