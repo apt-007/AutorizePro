@@ -6,13 +6,15 @@
 > **🟣️ When the AI feature is disabled, it uses the standard detection logic. AI analysis is optional but highly recommended. Due to the diverse nature of API responses, rule-based logic often falls short. Enabling AI analysis significantly improves efficiency and accuracy. Time is precious, so let AI handle repetitive and time-consuming tasks. Start discovering vulnerabilities at ten times the speed!**
 
 ### Tool Background
-- **Authorization bypass vulnerabilities are almost mandatory checks during black-box testing and SRC investigations, but manual testing for these vulnerabilities can be extremely time-consuming.**
-- **Automated tools, on the other hand, often suffer from high false positives due to the diverse nature of APIs. This gap led to the development of an AI-assisted analysis tool ➡️ AutorizePro !! ⬅️**
+- **Broken access control is a must-test in black-box testing and SRC bug hunting, but manual verification is extremely time-consuming.**
+- **Traditional authorization testing tools struggle to cover diverse API logic automatically, leading to high false positive rates and limited practicality.**
 
 ### Tool Highlights
-- **Optimized detection logic && added optional AI analysis module, reducing false-positive rates from 99% to 5%, liberating you from the sea of false positives.**
-- **For alerts that require manual confirmation, the tool provides a comparison view of the original request, unauthorized request, and authorization bypass attempt, making it easy to spot differences.**
-- **Supports various customizable options, including filter configurations, replacement rules, report exports, and integration with multiple large language models (defaulting to the outstanding Tongyi Qianwen).**
+- **Built-in AI analysis module (optional): reduces the original false positive rate from 95% to 5%, freeing users from manual result triage.**
+- **Privacy-friendly: supports analysis using self-hosted/private LLMs within your organization.**
+- **Automatically excludes static resources, HTML pages, and error status codes by default—no manual filtering needed.**
+- **Supports exporting authorization testing reports in both HTML and CSV formats.**
+- **Detailed logs explain AI decisions per request, making it easy to review and fine-tune detection logic.**
 
 ## 🔧 Installing AutorizePro
 ### 1️⃣ Download Burp Suite and Jython
@@ -39,27 +41,19 @@
 ![cover](imgs/cover_en.png)
 
 ## 🔫 Using the AutorizePro Plugin
-    1. Open the configuration tab by clicking AutorizePro -> Configuration.
-    
-    2. Use the `fetch cookie header` button to fetch the latest authentication header from the request or manually copy the low-privileged user's authentication header (usually Cookie or Authorization), then paste it into the textbox labeled “Insert injected header here.” Note: If the request already contains the header, the plugin will replace it; otherwise, a new header will be added.
-    
-    3. If you don’t need to test unauthenticated requests (i.e., requests without any cookies to check if the endpoint requires authentication), you can uncheck the `Check unauthenticated` box (enabled by default).
-    
-    4. Enable the `Intercept requests from Repeater` checkbox to process requests sent from Repeater with the plugin.
-    
-    5. Click the `AutorizePro is off` button to enable the plugin, allowing AutorizePro to start intercepting traffic and performing authorization checks.
-    
-    6. Open your browser and configure proxy settings to direct traffic through Burp's proxy.
-    
-    7. Use a high-privileged user account to access the application you want to test. When modifying resources for the privilege escalation test, you can use the Match/Replace configuration to modify the resource information needed for the test.
-    
-    8. In the left-side results panel of the AutorizePro plugin, you will see the URL of the request and the corresponding privilege check status.
-    
-    9. Currently, only the Aliyun Tongyi Qianwen API key (starting with `sk`) is supported. How to obtain the API key: https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key.
-    
-    10. When the API key is enabled, requests that meet the AI analysis trigger conditions will be further analyzed by AI, and results will be displayed in the `AI Analyzer` column.
-    
-    11. By clicking a URL in the left-side results panel, you can view its original request, modified request, and unauthenticated request/response to help distinguish differences.
+	1.	Open the configuration tab: click AutorizePro -> Configuration.
+
+	2.	Paste the second account’s authorization header into the textbox labeled “Insert injected header here”. Note: If the header already exists in the request, it will be replaced; otherwise, it will be added as a new header.
+	
+    3.	If you do not want to perform unauthenticated testing (i.e., requests without any cookies), uncheck Check unauthenticated (enabled by default).
+	
+    4.	Select an AI model and enter the corresponding API Key. Then, check the checkbox to enable AI Analysis. Results will appear in the left-side AI. Analyzer column.
+	
+    5.	Click the AutorizePro is off button to enable the plugin and start testing.
+	
+    6.	In the left-side results view of the AutorizePro plugin, you’ll see the request URLs and their corresponding access control statuses.
+	
+    7.	Click on a specific URL in the left panel, then switch to the Request/Response Viewers tab on the right to view the Original, Modified (Auth), and Unauthenticated request/response details for manual inspection.
 
 ### 🌠 Example Usage Effect
 > 🌟 Drastically reduced false positives: As seen in the image below, after enabling AI analysis, you only need to analyze whether a request is truly unauthorized, saving over 95% of manual analysis effort.
