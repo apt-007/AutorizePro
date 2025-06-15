@@ -72,49 +72,41 @@
 
 ![response](imgs/response.png)
 
+
 ### ❓检测状态说明
 - **Bypassed! (红色) : 判定越权**
 
 - **Enforced! (绿色) : 判定不存在越权**
 
-- **Is enforced??? (please configure enforcement detector): 无法判断，可以在 enforcement detector 进一步配置越权特征协助判断**
+- **Is enforced???: 无法判断，可以在 enforcement detector/已鉴权规则 中配置越权特征协助判断**
 
-```
-🌟 Tips:
+### 🚰 过滤器配置：在 Interception Filters/ 请求过滤规则 中配置拦截规则
+- 拦截过滤器位可以配置插件 需要拦截哪些域名 或 拦截符合指定特征的请求。
+- 支持黑名单、白名单、正则表达式或 Burp 的范围内的项目来确定拦截的范围，以避免不必要的域名被 AutorizePro 拦截，避免对无关请求的拦截分散分析精力。
+- ⚠️ **安全提示：因为工具涉及cookie替换重放，强烈建议 在 Interception Filters 指定目标的站点，以免cookie泄漏至其他站点**
+- 🌟 工具默认忽略静态资源、html、错误响应等类型请求的分析，无需用户配置。
 
-    Is enforced??? 状态表示插件无法确定接口是否做了权限控制，可通过 enforcement detector 进一步配置权限校验特征来辅助判断 或 启用AI来辅助分析。
-
-    eg:
-    如果某个接口对于越权访问请求会返回 "无权限" 这个指纹特征，
-    你就可以将这个指纹特征添加到 Enforcement Detector 过滤器中，这样插件判断时就会查找这个指纹特征，区分出实际已鉴权的接口，减少误报。
-```
-
-### 🚰 过滤器配置：在 Interception Filters 配置拦截规则
-
-- 拦截过滤器位可以配置插件需要拦截哪些域名 或 拦截符合指定特征的请求。
-- 你可以通过黑名单、白名单、正则表达式或 Burp 的范围内的项目来确定拦截的范围，以避免不必要的域名被 AutorizePro 拦截，避免对无关请求的拦截分散分析精力。
-- ⚠️ ⚠️ **安全提示：因为工具涉及cookie替换重放，强烈建议 在 Interception Filters 指定目标的站点，以免cookie泄漏至其他站点** ⚠️ ⚠️ 
-- 🌟 默认配置会避免拦截脚本和图片，你也可以新增更多静态资源类型的忽略规则。
-
-##  💰 AI分析功能需要花多少钱？(默认根据工具检测逻辑判断，AI需要用户启用之后才会生效)
-- 启用AI分析之后仅自动检测 (状态码相等 && 响应为json格式 && 响应长度在50-6000 的数据包);若不符合条件，AI分析功能将不会生效，减少不必要的AI分析带来的经费消耗。
+##  💰 AI分析功能需要花多少钱？(需勾选复选框之后才会启用AI分析)
+- 启用AI分析之后仅自动检测 (状态码相等 && 响应为json格式 && 响应长度在50-6000 的数据包)，减少不必要的AI分析带来的经费消耗。
 -  ⚠️ 注意：当启用AI分析功能时，您应该尽量在 Interception Filters 中配置拦截的 域名 / 规则，以免检测非目标站点带来的经费消耗。
-- AI分析功能需要先开通模型调用服务，在 [阿里云百炼首页顶部提示](https://bailian.console.aliyun.com/#/home) 进行开通：
-![tongyi](imgs/tongyi.png)
-- [阿里云通义千问API计费说明，新开通的都有 100万tokens 的免费额度](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**)
 - 🌟 支持多家厂商模型接入，要使用其他模型，请自行开通对应的服务以及申请API KEY，使用时填写API KEY + 选择对应厂商的模型即可。
-<p>
-    <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
-</p>
+- eg:   阿里云
+    - AI分析功能需要先开通模型调用服务，在 [阿里云百炼首页顶部提示](https://bailian.console.aliyun.com/#/home) 进行开通：
+![tongyi](imgs/tongyi.png)
+    - [阿里云通义千问API计费说明，新开通的都有 100万tokens 的免费额度](https://help.aliyun.com/zh/model-studio/billing-for-model-studio) ( 个人测试消耗示例：在插件开发调试期间全天较高频率测试且没有限制域名，全天消耗总费用**0.38元**)
+        <p>
+            <img alt="AIFee" src="https://suleo.wang/img/AutorizePro/ai_fee.jpg" width="30%" height="30%" style="max-width:20%;">
+        </p>
+
 
 ## ⛪ Discussion
 * 欢迎讨论任何关于工具相关的问题[点我](https://github.com/sule01u/AutorizePro/discussions)
 * Bug 反馈或新功能建议[点我](https://github.com/sule01u/AutorizePro/issues)
 * 欢迎 PR
 * 微信公众号: **扫码关注不懂安全获取更多安全分享**
-<p>
-    <img alt="QR-code" src="https://suleo.wang/img/mine.png" width="30%" height="30%" style="max-width:20%;">
-</p>
+    <p>
+        <img alt="QR-code" src="https://suleo.wang/img/mine.png" width="30%" height="30%" style="max-width:20%;">
+    </p>
 
 
 ##  🤗 鸣谢

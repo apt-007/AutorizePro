@@ -70,18 +70,11 @@
 
 ![response](imgs/response.png)
 
+
 ### ❓ Status Explanation
 - **Bypassed! (Red) : Unauthorized Access Detected**
 - **Enforced! (Green) : No Unauthorized Access Detected**
-- **Is enforced??? (please configure enforcement detector): Cannot Determine, Configure Enforcement Detector for Assistance**
-
-```angular2html
-TIPS:
-The `Is enforced???` status means the plugin cannot determine if the endpoint is enforcing authorization. You can configure the enforcement detector with specific authorization characteristics to assist in judgment.
-
-Example:
-If a particular endpoint responds with “Unauthorized” for privilege escalation attempts, you can add this fingerprint to the Enforcement Detector filter. This way, the plugin will look for this characteristic when judging if authorization is enforced, reducing false positives.
-```
+- **Is enforced???: Cannot Determine, Configure Enforcement Detector for Assistance**
 
 ### 🚰 Filter Configuration: Set Interception Rules in Interception Filters
 
