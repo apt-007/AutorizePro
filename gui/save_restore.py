@@ -11,6 +11,7 @@
 from javax.swing import SwingUtilities
 from javax.swing import JFileChooser
 from javax.swing import JFrame
+from javax.swing import JCheckBox
 
 from table import LogEntry, UpdateTableEDT
 from helpers.http import get_cookie_header_from_message, get_authorization_header_from_message, IHttpRequestResponseImplementation
@@ -54,7 +55,6 @@ class SaveRestore():
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setDialogTitle("State output file")
-        # 设置配置文件默认后缀为.autorizepro
         fileChooser.setSelectedFile(File("autorizepro_config.autorizepro"))
         userSelection = fileChooser.showSaveDialog(parentFrame)
 
@@ -104,19 +104,33 @@ class SaveRestore():
                     tempRow = [t, getattr(self._extender, t).getSelectedItem()]
                     csvwriter.writerow(tempRow)
 
+                # 保存Temporary headers（只保存type为Headers (simple string): 和 Headers (regex): 的项，避免和MatchReplace混淆）
                 for key in self._extender.badProgrammerMRModel:
                     d = dict(self._extender.badProgrammerMRModel[key])
                     d["regexMatch"] = d["regexMatch"] is not None
-                    tempRow = ["MatchReplace", base64.b64encode(json.dumps(d))]
-                    csvwriter.writerow(tempRow)
+                    # 只保存Headers类型的临时header
+                    if d["type"].startswith("Headers"):
+                        tempRow = ["TemporaryHeader", base64.b64encode(json.dumps(d))]
+                        csvwriter.writerow(tempRow)
 
                 d = dict((c, getattr(self._extender, c).isSelected()) for c in self._checkBoxes)
                 tempRow = ["CheckBoxes", json.dumps(d)]
                 csvwriter.writerow(tempRow)
 
-                isSelected = self._extender.exportPnl.getComponents()[-1].isSelected()
+                # 修复exportPnl最后一个组件不是JCheckBox时报错的问题
+                component = self._extender.exportPnl.getComponents()[-1]
+                if isinstance(component, JCheckBox):
+                    isSelected = component.isSelected()
+                else:
+                    isSelected = False
                 tempRow = ["RemoveDuplicates", json.dumps(isSelected)]
                 csvwriter.writerow(tempRow)
+
+                # 保存所有自定义header配置（savedHeaders）
+                print("[DEBUG] saveState: savedHeaders count:", len(self._extender.savedHeaders))
+                for headerObj in self._extender.savedHeaders:
+                    tempRow = ["SavedHeader", base64.b64encode(json.dumps(headerObj))]
+                    csvwriter.writerow(tempRow)
 
                 # Request/response list
                 for i in range(0,self._extender._log.size()):
@@ -180,6 +194,7 @@ class SaveRestore():
 
                 csvreader = csv.reader(csvfile, delimiter='\t', quotechar='|')
 
+                self._extender.savedHeaders = []  # 还原前先清空
                 for row in csvreader:
                     if row[0] == "ReplaceString":
                         self._extender.replaceString.setText(base64.b64decode(row[1]))
@@ -221,6 +236,21 @@ class SaveRestore():
                         self._extender.MRModel.addElement(key)
                         continue
 
+                    if row[0] == "TemporaryHeader":
+                        d = json.loads(base64.b64decode(row[1]))
+                        key = d["type"] + " " + d["match"] + "->" + d["replace"]
+                        if key in self._extender.badProgrammerMRModel:
+                            continue
+                        regexMatch = None
+                        if d["regexMatch"]:
+                            try:
+                                d["regexMatch"] = re.compile(d["match"])
+                            except re.error:
+                                continue
+                        self._extender.badProgrammerMRModel[key] = d
+                        self._extender.MRModel.addElement(key)
+                        continue
+
                     if row[0] == "CheckBoxes":
                         d = json.loads(row[1])
                         for k in d:
@@ -230,9 +260,18 @@ class SaveRestore():
                     if row[0] == "RemoveDuplicates":
                         isSelected = json.loads(row[1])
                         try:
-                            self._extender.exportPnl.getComponents()[-1].setSelected(isSelected)
+                            from javax.swing import JCheckBox
+                            component = self._extender.exportPnl.getComponents()[-1]
+                            if isinstance(component, JCheckBox):
+                                component.setSelected(isSelected)
+                            # 否则什么都不做，避免报错
                         except TypeError:
                             pass
+                        continue
+
+                    if row[0] == "SavedHeader":
+                        headerObj = json.loads(base64.b64decode(row[1]))
+                        self._extender.savedHeaders.append(headerObj)
                         continue
 
                     tempRequestResponseHost = row[0]
@@ -308,3 +347,17 @@ class SaveRestore():
                     if authorizationHeader:
                         self._extender.lastAuthorizationHeader = authorizationHeader
                         self._extender.fetchAuthorizationHeaderButton.setEnabled(True)
+
+                print("[DEBUG] restoreState: savedHeaders count:", len(self._extender.savedHeaders))
+                # 还原完所有SavedHeader后，刷新下拉框并选中第一个，触发事件同步内容
+                if hasattr(self._extender, 'savedHeadersTitlesCombo'):
+                    from javax.swing import DefaultComboBoxModel
+                    self._extender.savedHeadersTitlesCombo.setModel(DefaultComboBoxModel(
+                        [x['title'] for x in self._extender.savedHeaders]
+                    ))
+                    if self._extender.savedHeaders:
+                        self._extender.savedHeadersTitlesCombo.setSelectedIndex(0)
+                        from java.awt.event import ActionEvent
+                        event = ActionEvent(self._extender.savedHeadersTitlesCombo, ActionEvent.ACTION_PERFORMED, "restore")
+                        for listener in self._extender.savedHeadersTitlesCombo.getActionListeners():
+                            listener.actionPerformed(event)

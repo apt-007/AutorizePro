@@ -57,7 +57,7 @@ STRINGS = {
     # Status messages
     "status_bypassed": "Bypassed!",
     "status_enforced": "Enforced!",
-    "status_is_enforced": "Is enforced??? (please configure enforcement detector)",
+    "status_is_enforced": "Is enforced???",
     
     # Enforcement detector
     "enforcement_detector": "Privilege Enforcement Rules",

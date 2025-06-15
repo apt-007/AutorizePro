@@ -151,6 +151,20 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                 if newBody != msgBody:
                     modifiedFlag = True
                 msgBody = newBody
+            if v["type"] == "URL (simple string):":
+                requestLine = headers[0]
+                method, url, protocol = requestLine.split(" ", 2)
+                newUrl = url.replace(v["match"], v["replace"])
+                if newUrl != url:
+                    modifiedFlag = True
+                    headers[0] = "{} {} {}".format(method, newUrl, protocol)
+            if v["type"] == "URL (regex):":
+                requestLine = headers[0]
+                method, url, protocol = requestLine.split(" ", 2)
+                newUrl = re.sub(v["regexMatch"], v["replace"], url)
+                if newUrl != url:
+                    modifiedFlag = True
+                    headers[0] = "{} {} {}".format(method, newUrl, protocol)
         msgBody = self._helpers.stringToBytes(msgBody)
 
     newMessage = self._helpers.buildHttpMessage(headers, msgBody)
