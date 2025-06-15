@@ -357,7 +357,7 @@ class Export():
             <body>
             <h1>AutorizePro Report<h1>
             <div class="datagrid"><table>
-            <thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"43%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
+            <thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"43%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th><th width=\"11%\">AI Analysis Result</th></tr></thead>
             <tbody>"""
             unique_HTML_lines = set()  # 用于存储唯一值
             entries_count = 0  # 计数器，用于统计符合条件的条目数量
@@ -410,7 +410,15 @@ class Export():
                     
                     if should_add:
                         try:
-                            htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (
+                            ai_color = ""
+                            ai_result = self._log.get(i)._aiAnalysisResult
+                            if ai_result == self.BYPASSSED_STR:
+                                ai_color = "red"
+                            elif ai_result == self.IS_ENFORCED_STR:
+                                ai_color = "yellow"
+                            elif ai_result == self.ENFORCED_STR:
+                                ai_color = "LawnGreen"
+                            htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (
                                 self._log.get(i)._id, 
                                 self._log.get(i)._method, 
                                 self._log.get(i)._url, 
@@ -421,7 +429,9 @@ class Export():
                                 color_modified, 
                                 self._log.get(i)._enfocementStatus, 
                                 color_unauthorized, 
-                                self._log.get(i)._enfocementStatusUnauthorized
+                                self._log.get(i)._enfocementStatusUnauthorized,
+                                ai_color,
+                                ai_result
                             )
                             entries_count += 1
                         except:
@@ -467,7 +477,7 @@ class Export():
             if self._log.size() == 0:
                 return
                 
-            csvContent = "id\tMethod\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
+            csvContent = "id\tMethod\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\tAI Analysis Result\n"
 
             unique_CVS_lines = set()
             entries_count = 0
@@ -501,7 +511,7 @@ class Export():
                     
                     if should_add:
                         try:
-                            csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (
+                            csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\t%s\n" % (
                                 self._log.get(i)._id, 
                                 self._log.get(i)._method, 
                                 self._log.get(i)._url, 
@@ -509,7 +519,8 @@ class Export():
                                 len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, 
                                 len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, 
                                 self._log.get(i)._enfocementStatus, 
-                                self._log.get(i)._enfocementStatusUnauthorized
+                                self._log.get(i)._enfocementStatusUnauthorized,
+                                self._log.get(i)._aiAnalysisResult
                             )
                             entries_count += 1
                         except:
