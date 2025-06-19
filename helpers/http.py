@@ -68,7 +68,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                             paramKey, paramValue = param.split('=', 1)
                             paramKey = paramKey.strip()
                             paramValue = paramValue.strip()
-                            pattern = r'([?&]){}=[^&\s]*'.format(re.escape(paramKey))
+                            pattern = r'(^|[?&]){}=[^&]*'.format(re.escape(paramKey))
                             replacement = r'\1{}={}'.format(paramKey, paramValue)
                             newQuery = re.sub(pattern, replacement, query, count=0, flags=re.DOTALL)
                             if newQuery != query:
