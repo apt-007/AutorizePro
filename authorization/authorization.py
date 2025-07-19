@@ -15,11 +15,11 @@ import hashlib
 import datetime
 import threading
 from java.net import URL, HttpURLConnection
-from java.io import OutputStreamWriter, BufferedReader, InputStreamReader
+from java.io import OutputStreamWriter, BufferedReader, InputStreamReader, EOFException
 from javax.net.ssl import SSLSocketFactory, SSLHandshakeException
-from java.net import SocketException, EOFException
+from java.net import SocketException
 from javax.swing import SwingUtilities
-from java.lang import StringBuilder
+from java.lang import StringBuilder, Runnable
 
 # Global variables
 logged_html_urls = set()
@@ -59,7 +59,7 @@ class LogEntry:
         self._ai_analysis = ai_analysis
 
 
-class UpdateTableEDT(java.lang.Runnable):
+class UpdateTableEDT(Runnable):
     def __init__(self, extender, method, firstRow, lastRow):
         self._extender = extender
         self._method = method
