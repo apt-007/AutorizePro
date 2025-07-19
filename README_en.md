@@ -85,8 +85,19 @@
 ## 💰 How Much Does the AI Analysis Feature Cost? (By default, detection logic is followed, and AI is only activated when enabled by the user)
 - To minimize the costs associated with AI analysis, only packets with equal status codes, JSON format responses, and lengths under 3000 are analyzed when AI analysis is enabled. If conditions are not met, AI analysis will not activate.  
 - ⚠️ Note: When enabling AI analysis, you should configure the intercepted domains/rules in Interception Filters to avoid cost overruns caused by analyzing irrelevant sites.
+- **Supported AI Models**:
+  - **Alibaba Qwen**: qwen-turbo, qwen-plus, qwen-max
+  - **DeepSeek**: deepseek-chat, deepseek-reasoner  
+  - **OpenAI GPT**: gpt-4o-mini, gpt-4o
+  - **Zhipu GLM**: glm-4-flash, glm-4-air
+  - **Tencent Hunyuan**: hunyuan-lite, hunyuan-standard
+  - **🆕 Google Gemini**: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp
 - Personal testing cost example: during high-frequency testing throughout a full day without domain restrictions, the total cost was **¥0.38** (tongyi qwen-plus).
 - If you are outside China, you can choose the GPT or use alibabacloud model->[bailian](https://bailian.console.alibabacloud.com/)
+- **🆕 Google Gemini Setup**:
+  - Visit [Google AI Studio](https://aistudio.google.com/) to get free API Key
+  - Global access with fast response and high accuracy
+  - Recommended models: gemini-1.5-flash (fast) or gemini-1.5-pro (high precision)
 
 
 ## ⛪ Discussion

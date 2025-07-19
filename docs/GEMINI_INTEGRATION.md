@@ -135,7 +135,7 @@ def test_gemini_response_parsing():
     
     # 定义解析模式
     GEMINI_PATTERN = re.compile(r'"text":\s*".*?res.*?[\'"](\w+)[\'"].*?"', re.DOTALL | re.IGNORECASE)
-    GEMINI_TEXT_PATTERN = re.compile(r'"text":\s*"((?:[^"\\\\]|\\\\.)*)"\s*}', re.DOTALL)
+    GEMINI_TEXT_PATTERN = re.compile(r'"text":\s*"(.*?)"', re.DOTALL)
     RES_FIELD_PATTERN = re.compile(r'[\'\"]res[\'\"]:\s*[\'\"](\w+)[\'\"]', re.IGNORECASE)
     
     def extract_res_value_gemini(response_string):
@@ -715,27 +715,6 @@ def escape_special_characters(self, input_string):
         "\t", "")
 
 
-def extract_gemini_text(self, response_string):
-    """使用 JSON 解析提取 Gemini 响应中的 text 内容"""
-    try:
-        import json as json_module
-        # 直接解析 JSON 响应
-        parsed = json_module.loads(response_string)
-        
-        # 导航到 text 字段
-        if 'candidates' in parsed:
-            for candidate in parsed['candidates']:
-                if 'content' in candidate:
-                    content = candidate['content']
-                    if 'parts' in content:
-                        for part in content['parts']:
-                            if 'text' in part:
-                                return part['text']
-        return None
-    except Exception as e:
-        return None
-
-
 def read_response(self, stream):
     reader = None
     try:
@@ -845,32 +824,6 @@ def extract_res_value(self, response_string):
                 return match.group(1).lower()
         
         # 特殊处理 Gemini 响应格式
-        if "candidates" in content_to_process:
-            # 使用 JSON 解析方法处理 Gemini 响应
-            text_content = extract_gemini_text(self, content_to_process)
-            if text_content:
-                # 解码转义字符
-                text_content = text_content.replace('\\n', '\n').replace('\\\"', '\"').replace('\\\\', '\\')
-                res_in_text = RES_FIELD_PATTERN.search(text_content)
-                if res_in_text:
-                    print("Complete AI Analysis (Gemini): " + text_content)
-                    return res_in_text.group(1).lower()
-                # 如果上面没找到，尝试更宽松的匹配
-                import json as json_module
-                try:
-                    # 尝试解析为 JSON
-                    if '{' in text_content and '}' in text_content:
-                        json_start = text_content.find('{')
-                        json_end = text_content.rfind('}') + 1
-                        json_str = text_content[json_start:json_end]
-                        parsed = json_module.loads(json_str)
-                        if 'res' in parsed:
-                            print("Complete AI Analysis (Gemini JSON): " + json_str)
-                            return str(parsed['res']).lower()
-                except:
-                    pass
-        
-        # 备用：正则表达式处理 Gemini 响应
         gemini_text_match = GEMINI_TEXT_PATTERN.search(content_to_process)
         if gemini_text_match:
             text_content = gemini_text_match.group(1)
@@ -878,9 +831,22 @@ def extract_res_value(self, response_string):
             text_content = text_content.replace('\\n', '\n').replace('\\\"', '\"').replace('\\\\', '\\')
             res_in_text = RES_FIELD_PATTERN.search(text_content)
             if res_in_text:
-                print("Complete AI Analysis (Gemini Regex): " + text_content)
+                print("Complete AI Analysis (Gemini): " + text_content)
                 return res_in_text.group(1).lower()
-        
+            # 如果上面没找到，尝试更宽松的匹配
+            import json as json_module
+            try:
+                # 尝试解析为 JSON
+                if '{' in text_content and '}' in text_content:
+                    json_start = text_content.find('{')
+                    json_end = text_content.rfind('}') + 1
+                    json_str = text_content[json_start:json_end]
+                    parsed = json_module.loads(json_str)
+                    if 'res' in parsed:
+                        print("Complete AI Analysis (Gemini JSON): " + json_str)
+                        return str(parsed['res']).lower()
+            except:
+                pass
         
         hunyuan_match = HUNYUAN_CONTENT_PATTERN.search(content_to_process)
         if hunyuan_match:
